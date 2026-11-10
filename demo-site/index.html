@@ -7,9 +7,10 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;500;700&display=swap">
   <style>
-    /* DEV ONLY stand-in for ranchischool.metasofsda.in, styled like one of its inner pages: logo + menu button over a
-       dark banner with title and breadcrumb, content, teal contact box, footer columns, teal copyright bar.
-       The three "pages" (pay, terms, refund) live in this one file; the URL hash picks which one shows (CSS :target). */
+    /* DEMO ONLY stand-in for ranchischool.metasofsda.in, served by the api at /view/<slug>. Styled like one of the
+       site's inner pages: logo + menu button over a dark banner with title and breadcrumb, content, teal contact box,
+       footer columns, teal copyright bar. The three "pages" (pay, terms, refund) live in this one file; the URL hash
+       picks which one shows (CSS :target). */
     :root { --teal: #5bc6d0; --ink: #606062; --pale: #a2dde1; }
     * { box-sizing: border-box; }
     body { margin: 0; font: 400 16px/26px "Roboto Condensed", sans-serif; color: var(--ink); background: #fff; }
@@ -78,7 +79,7 @@
 <body>
   <header>
     <div class="container">
-      <a href="https://ranchischool.metasofsda.in/"><img src="logo.png" alt="Metas Adventist School"></a>
+      <a href="https://ranchischool.metasofsda.in/"><img src="/assets/schools/ranchi/logo.png" alt="Metas Adventist School"></a>
       <details class="menu">
         <summary aria-label="Menu"><i class="fa fa-bars"></i></summary>
         <ul>
@@ -100,7 +101,7 @@
   <section id="pay" class="page">
     <div class="banner"><h1>Pay Fees Online</h1><ul><li><a href="https://ranchischool.metasofsda.in/">Home</a></li><li>Pay Fees Online</li></ul></div>
     <div class="content container">
-      <iframe class="pay" src="__PAY_URL__/pay/ranchi" title="Pay fees"></iframe>   <!-- serve.js fills in PAY_URL -->
+      <iframe class="pay" src="__PAY_PAGE__" title="Pay fees"></iframe>   <!-- the api fills in /pay/<slug> -->
     </div>
   </section>
 
@@ -145,7 +146,7 @@
       </div>
       <div class="cols">
         <div>
-          <img src="logo.png" alt="Metas Adventist School">
+          <img src="/assets/schools/ranchi/logo.png" alt="Metas Adventist School">
           <p style="text-align:center">Metas Adventist School<br>(Metas' Unit)<br>Part of Seventh-day Adventist Organization</p>
           <p style="text-align:center"><a href="https://www.metasofsda.in/">metasofsda.in</a></p>
         </div>

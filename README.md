@@ -6,7 +6,7 @@ fee receipt. The school validates and approves the payment from `pay_order` and 
 due, by the school's own rule (Ranchi: at least half), and can see and download the year's statement.
 
 ## How a payment flows
-    parent ─▶ school website ─iframe─▶ /pay/<slug>            the pay page (public/)
+    parent ─▶ school website ─iframe─▶ /pay/<slug>            the pay page (public/)   demo: /view/<slug> stands in for the website
                                           │
                                           ▼  /api/<slug>/...   the API (src/)
                                  the school's own database     stored procedures (schools-sql/)
@@ -36,22 +36,21 @@ so you can run as many copies of it as you need.
     test/                pay.test.ts (integration, Ranchi DB) · receipt.test.ts (PDFs, no DB)
     tools/               db.ts = `npm run db:deploy` / `db:status` (installs and checks the SQL in the school databases)
                          DEV ONLY: restore-ranchi.sh (loads the Ranchi backup) · demo-students.sh
-    demo-site/           DEV ONLY: stand-in for the school's own website
+    demo-site/           DEMO ONLY: stand-in for the school's own website, served by the api at /view/<slug>
 
 ## Run everything (Docker)
     cp .env.example .env                            # replace every CHANGE_ME; SMTP_URL = your SMTP provider
     docker compose up -d mssql && sh tools/restore-ranchi.sh     # needs Node: it runs `npm run db:deploy`
     docker compose up --build -d
-- School site (Ranchi)  http://localhost:5003   `sh tools/demo-students.sh` prints admission numbers that owe fees
+- School site (Ranchi)  http://localhost:4000/view/ranchi   `sh tools/demo-students.sh` prints admission numbers that owe fees
 - Pay page direct       http://localhost:4000/pay/ranchi
 - Receipt emails go straight through `SMTP_URL` (enter a real address on the pay page). Empty = no emails.
 - Stop: `docker compose down` (data kept) | wipe: `docker compose down -v`
 - Reset test payments: re-run `sh tools/restore-ranchi.sh`
 
-## The api on Heroku, the school site local
-The api runs as a Docker image on Heroku (app `facts-pay`, https://facts-pay-8f54f64208f2.herokuapp.com). The school
-site stays local and frames that: `node demo-site/serve.js` (or `PAY_URL=http://localhost:4000 node demo-site/serve.js`
-to frame a local api).
+## On Heroku
+The api runs as a Docker image on Heroku (app `facts-pay`). The demo school site is https://facts-pay-8f54f64208f2.herokuapp.com/view/ranchi
+and the pay page it frames is https://facts-pay-8f54f64208f2.herokuapp.com/pay/ranchi.
 
     docker buildx build --platform linux/amd64 --provenance=false --sbom=false \
       --output type=image,oci-mediatypes=false,push=true -t registry.heroku.com/facts-pay/web .
@@ -92,6 +91,7 @@ Every school's database is different, so each school gets its own SQL file, alwa
 4. Optional branding: `public/schools/<slug>/logo.png` (pay page, PDFs, email) and `hero.jpg`.
 5. School website: `<iframe src="https://pay.yourdomain/pay/<slug>">`, plus the 3-line `message` listener from
    [demo-site/index.html](demo-site/index.html) so the iframe grows with its content (no inner scrollbar on phones).
+   Until then, `/view/<slug>` on the api is a stand-in for the school's website (it shows Ranchi's branding).
 
 ## Keeping many school databases in step
     npm run db:status              # every school: its version, out of date?, edited by hand in the database?

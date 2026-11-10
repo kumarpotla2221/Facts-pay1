@@ -1,4 +1,5 @@
 import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import Fastify from 'fastify';
 import helmet from '@fastify/helmet';
 import rateLimit from '@fastify/rate-limit';
@@ -23,6 +24,7 @@ export async function buildApp(opts: { logger?: boolean; mailTransport?: Pick<Tr
   const mailer = new Mailer(opts.mailTransport ?? (config.SMTP_URL ? nodemailer.createTransport(config.SMTP_URL) : undefined), config.MAIL_FROM, app.log);
   const payments = new Payments(schools, mailer);
   const payPage = readFileSync(publicDir + 'index.html');
+  const demoSite = readFileSync(fileURLToPath(new URL('../demo-site/index.html', import.meta.url)), 'utf8');
 
   // Security headers. The pay page overrides frame-ancestors per school (below); everything else is not embeddable.
   await app.register(helmet, {
@@ -36,13 +38,24 @@ export async function buildApp(opts: { logger?: boolean; mailTransport?: Pick<Tr
 
   app.get('/health', async () => ({ ok: true }));
 
-  // Hosted pay page. Only the school's own website(s) may iframe it.
+  // Hosted pay page. Only the school's own website(s) may iframe it (and the demo site below, which is this origin).
   app.get('/pay/:slug', async (req, reply) => {
     const school = schools.get((req.params as { slug: string }).slug);
     return reply
-      .header('content-security-policy', `default-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors ${school.origins.join(' ') || "'none'"}`)
+      .header('content-security-policy', `default-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'self' ${school.origins.join(' ')}`)
       .type('text/html; charset=utf-8')
       .send(payPage);
+  });
+
+  // DEMO ONLY: a stand-in for the school's own website, framing the pay page the way the real site will.
+  // Its CSP is looser than the pay page's because it uses a CDN stylesheet, web fonts and an embedded map.
+  app.get('/view/:slug', async (req, reply) => {
+    const { slug } = schools.get((req.params as { slug: string }).slug);
+    return reply
+      .header('content-security-policy', "default-src 'self'; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com; "
+        + "font-src https://cdnjs.cloudflare.com https://fonts.gstatic.com; script-src 'unsafe-inline'; frame-src 'self' https://www.google.com; img-src 'self' data:")
+      .type('text/html; charset=utf-8')
+      .send(demoSite.replace('__PAY_PAGE__', `/pay/${slug}`));
   });
 
   payRoutes(app, { payments, schools, config });

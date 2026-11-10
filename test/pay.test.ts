@@ -154,9 +154,13 @@ describe('payment flow', () => {
 });
 
 describe('embedding', () => {
-  it('pay page may only be framed by its own school site', async () => {
+  it('pay page may only be framed by its own school site (and the demo site, which is this origin)', async () => {
     const res = await app.inject({ method: 'GET', url: '/pay/ranchi' });
-    expect(res.headers['content-security-policy']).toContain('frame-ancestors https://ranchischool.metasofsda.in http://localhost:5003');
+    expect(res.headers['content-security-policy']).toContain("frame-ancestors 'self' https://ranchischool.metasofsda.in");
+    const demo = await app.inject({ method: 'GET', url: '/view/ranchi' });
+    expect(demo.statusCode).toBe(200);
+    expect(demo.body).toContain('src="/pay/ranchi"');
+    expect((await app.inject({ method: 'GET', url: '/view/nosuchschool' })).statusCode).toBe(404);
   });
 });
 
