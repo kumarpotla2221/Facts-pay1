@@ -35,7 +35,6 @@ the dues query lives here, in this repository. The API keeps no state, so you ca
     schools-sql/         README.md = the database contract · setup.sql = what the school runs once (the login + pay_order)
                          <slug>.sql = the school's dues query, one per school (ranchi.sql) · _template.sql = the empty shape to copy
     test/                pay.test.ts (integration, Ranchi DB) · receipt.test.ts (PDFs, no DB)
-    tools/               DEV ONLY: demo-students.ts = `npm run demo-students` (Ranchi admission numbers that owe fees)
     demo-site/           DEMO ONLY: stand-in for the school's own website, served by the api at /view/<slug>
 
 ## Run locally
@@ -45,7 +44,6 @@ The api runs on your machine; the database is the Heroku demo copy (see "On Hero
     npm install && npm run dev                                      # api on :4000 with reload
 - School site (Ranchi)  http://localhost:4000/view/ranchi
 - Pay page direct       http://localhost:4000/pay/ranchi
-- `npm run demo-students` prints admission numbers that owe fees
 - Receipt emails go straight through `SMTP_URL` (enter a real address on the pay page). Empty = no emails.
 - `npm test` (integration tests: PAYS one student's dues in that database, then marks them approved so they come back)
 - `npm run typecheck`. To eyeball the PDF designs: `RECEIPT_OUT=/tmp/r.pdf STATEMENT_OUT=/tmp/s.pdf npx vitest run test/receipt.test.ts`.

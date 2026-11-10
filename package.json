@@ -9,8 +9,7 @@
     "build": "tsc -p tsconfig.build.json",
     "start": "node dist/server.js",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run",
-    "demo-students": "tsx --env-file=.env tools/demo-students.ts"
+    "test": "vitest run"
   },
   "dependencies": {
     "@fastify/helmet": "^13.2.0",
