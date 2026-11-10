@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Pay Fees Online || METAS ADVENTIST SCHOOL</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;500;700&display=swap">
+  <style>
+    /* DEV ONLY stand-in for ranchischool.metasofsda.in, styled like one of its inner pages: logo + menu button over a
+       dark banner with title and breadcrumb, content, teal contact box, footer columns, teal copyright bar.
+       The three "pages" (pay, terms, refund) live in this one file; the URL hash picks which one shows (CSS :target). */
+    :root { --teal: #5bc6d0; --ink: #606062; --pale: #a2dde1; }
+    * { box-sizing: border-box; }
+    body { margin: 0; font: 400 16px/26px "Roboto Condensed", sans-serif; color: var(--ink); background: #fff; }
+    a { color: inherit; text-decoration: none; }
+    ul { list-style: none; margin: 0; padding: 0; }
+    .container { max-width: 1170px; margin: 0 auto; padding: 0 15px; }
+
+    /* header: transparent, sits on top of the banner */
+    header { position: absolute; top: 0; left: 0; right: 0; z-index: 10; padding: 16px 0; }
+    header .container { display: flex; align-items: center; justify-content: space-between; }
+    header img { height: 63px; width: auto; max-width: 70vw; }
+    .menu { position: relative; }
+    .menu summary { list-style: none; cursor: pointer; color: #fff; font-size: 26px; padding: 4px 10px; }
+    .menu summary::-webkit-details-marker { display: none; }
+    .menu ul { position: absolute; right: 0; top: 100%; min-width: 230px; padding: 8px 0; background: #111; }
+    .menu a { display: block; padding: 10px 20px; color: #bbb; font-size: 15px; text-transform: uppercase; white-space: nowrap; }
+    .menu a:hover, .menu .here { color: var(--teal); }
+
+    /* a page = banner (title + breadcrumb) + content. Only the page named in the URL hash shows; none named = pay */
+    .page { display: none; }
+    .page:target, body:not(:has(.page:target)) #pay { display: block; }
+    .banner { padding: 100px 0 35px; text-align: center; color: #fff; background: linear-gradient(120deg, #3a3a3a, #1f3d42 60%, #4a2a2a); }
+    .banner h1 { margin: 5px 0 0; font-size: 25px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+    .banner li { display: inline-block; color: var(--teal); }
+    .banner li a { position: relative; padding-right: 30px; color: #fff; }
+    .banner li a::before, .banner li a::after { content: ""; position: absolute; top: 2px; right: 7px; width: 2px; height: 15px; background: rgba(255,255,255,.8); transform: rotate(26deg); }
+    .banner li a::before { right: 13px; }
+    .content { padding: 40px 0 70px; }
+    .content h2 { margin: 30px 0 8px; font-size: 20px; color: #333; }
+    .content p { margin: 0 0 12px; }
+    .dummy { padding: 10px 16px; border-left: 4px solid var(--teal); background: #f2f2f2; font-style: italic; }
+    /* the ONLY thing a school site needs: this iframe (or a plain link to the same URL). The height is a fallback:
+       the script at the bottom resizes it to the pay page's content */
+    iframe.pay { display: block; width: 100%; height: 1250px; border: 0; }
+
+    /* footer */
+    .contact { display: grid; grid-template-columns: repeat(3, 1fr); padding: 35px; text-align: center; color: rgba(255,255,255,.7); background: var(--teal); border-radius: 30px; box-shadow: 0 0 20px rgba(0,0,0,.7); }
+    .contact div + div { border-left: 3px double #e2e2e2; }
+    .contact i { font-size: 28px; color: var(--ink); }
+    .contact h4 { margin: 12px 0 10px; font-size: 20px; color: #fff; }
+    .contact p { margin: 0; font-size: 15px; }
+    .cols { display: grid; grid-template-columns: repeat(4, 1fr); gap: 30px; padding: 70px 0 50px; }
+    .cols img { width: 100%; max-width: 270px; margin-bottom: 25px; }
+    .cols h5 { position: relative; margin: 0 0 40px; padding-bottom: 5px; font-size: 16px; font-weight: 600; color: var(--teal); }
+    .cols h5::after { content: ""; position: absolute; left: 0; bottom: -5px; width: 50px; height: 1px; background: var(--teal); }
+    .cols li { line-height: 33px; }
+    .cols li a { color: var(--pale); }
+    .cols li a:hover { color: var(--teal); }
+    .cols li i { padding-right: 10px; }
+    .cols .map { width: 100%; height: 200px; border: 0; }
+    .social { display: flex; justify-content: flex-end; gap: 5px; margin-top: 30px; }
+    .social a { display: block; width: 42px; height: 42px; border-radius: 50%; background: var(--teal); color: #fff; font-size: 13px; line-height: 44px; text-align: center; }
+    .bottom { padding: 18px 0; border-top: 1px solid #092532; background: var(--teal); color: #fff; font-size: 15px; text-align: center; }
+    .bottom a { text-decoration: underline; }
+
+    @media (max-width: 767px) {
+      header img { height: 44px; }
+      .banner { padding-top: 90px; }
+      .contact { grid-template-columns: 1fr; gap: 24px; padding: 24px; }
+      .contact div + div { border: 0; }
+      .cols { grid-template-columns: 1fr; }
+      .social { justify-content: center; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container">
+      <a href="https://ranchischool.metasofsda.in/"><img src="logo.png" alt="Metas Adventist School"></a>
+      <details class="menu">
+        <summary aria-label="Menu"><i class="fa fa-bars"></i></summary>
+        <ul>
+          <li><a href="https://ranchischool.metasofsda.in/">Home</a></li>
+          <li><a href="https://ranchischool.metasofsda.in/who-we-are">About Us</a></li>
+          <li><a href="https://ranchischool.metasofsda.in/courses">Academics</a></li>
+          <li><a href="https://ranchischool.metasofsda.in/fee-structure">Admission</a></li>
+          <li><a class="here" href="#pay">Pay Fees Online</a></li>
+          <li><a href="https://ranchischool.metasofsda.in/school-life">School Life</a></li>
+          <li><a href="https://ranchischool.metasofsda.in/photo-gallery">Media</a></li>
+          <li><a href="https://ranchischool.metasofsda.in/current-openings">Career</a></li>
+          <li><a href="https://ranchischool.metasofsda.in/alumni-list">Alumni</a></li>
+          <li><a href="https://ranchischool.metasofsda.in/Contact-Us/">Contact</a></li>
+        </ul>
+      </details>
+    </div>
+  </header>
+
+  <section id="pay" class="page">
+    <div class="banner"><h1>Pay Fees Online</h1><ul><li><a href="https://ranchischool.metasofsda.in/">Home</a></li><li>Pay Fees Online</li></ul></div>
+    <div class="content container">
+      <iframe class="pay" src="__PAY_URL__/pay/ranchi" title="Pay fees"></iframe>   <!-- serve.js fills in PAY_URL -->
+    </div>
+  </section>
+
+  <section id="terms" class="page">
+    <div class="banner"><h1>Terms &amp; Conditions</h1><ul><li><a href="https://ranchischool.metasofsda.in/">Home</a></li><li>Terms &amp; Conditions</li></ul></div>
+    <div class="content container">
+      <p class="dummy">Dummy text for the demo site. The school supplies the final wording before going live.</p>
+      <h2>1. Online fee payment</h2>
+      <p>This page lets parents and guardians pay school fees and transport fees of a student of Metas Adventist School, Ranchi, by entering the student's admission number. The amount shown is the balance due as per the school's records on that day.</p>
+      <h2>2. Transaction charges</h2>
+      <p>Charges levied by the payment gateway or the bank are payable by the payer and are shown before the payment is confirmed. Kindly check the final transaction amount before making the payment.</p>
+      <h2>3. Receipt</h2>
+      <p>A fee receipt is generated on successful payment and, where an email address was given, a PDF copy is emailed. The receipt is the school's acknowledgement of the payment. Please keep it for your records.</p>
+      <h2>4. Accuracy of information</h2>
+      <p>It is the payer's responsibility to enter the correct admission number and to verify the student's name and class shown before paying. The school is not responsible for payments made against a wrong admission number.</p>
+      <h2>5. Contact</h2>
+      <p>For any query regarding fees, please contact the school office at +91 7050555223 or metasschoolranchi@gmail.com.</p>
+    </div>
+  </section>
+
+  <section id="refund" class="page">
+    <div class="banner"><h1>Refund Policy</h1><ul><li><a href="https://ranchischool.metasofsda.in/">Home</a></li><li>Refund Policy</li></ul></div>
+    <div class="content container">
+      <p class="dummy">Dummy text for the demo site. The school supplies the final wording before going live.</p>
+      <h2>1. Fees once paid</h2>
+      <p>School fees and transport fees once paid are not refundable, except in the cases below.</p>
+      <h2>2. Duplicate payment</h2>
+      <p>If the same fee is paid twice, the excess amount is refunded to the original payment method, or adjusted against the next fee instalment at the parent's choice.</p>
+      <h2>3. Failed transaction</h2>
+      <p>If the amount is debited from your account but no receipt is generated, the payment is treated as failed. The amount is normally reversed by the bank within 7 to 10 working days. If it is not, please contact the school office with the transaction details.</p>
+      <h2>4. How to request a refund</h2>
+      <p>Write to metasschoolranchi@gmail.com with the student's admission number, the receipt number (if any), the date of payment and the amount. Approved refunds are processed within 10 working days.</p>
+    </div>
+  </section>
+
+  <footer>
+    <div class="container">
+      <div class="contact">
+        <div><i class="fa fa-map-marker"></i><h4>Address</h4><p>Bariyatu Road, Ranchi - 9</p></div>
+        <div><i class="fa fa-phone"></i><h4>Phone Number</h4><p>+91 7050555223</p></div>
+        <div><i class="fa fa-envelope"></i><h4>Email Address</h4><p>metasschoolranchi@gmail.com</p></div>
+      </div>
+      <div class="cols">
+        <div>
+          <img src="logo.png" alt="Metas Adventist School">
+          <p style="text-align:center">Metas Adventist School<br>(Metas' Unit)<br>Part of Seventh-day Adventist Organization</p>
+          <p style="text-align:center"><a href="https://www.metasofsda.in/">metasofsda.in</a></p>
+        </div>
+        <div>
+          <h5>QUICK ACCESS</h5>
+          <ul>
+            <li><a href="https://ranchischool.metasofsda.in/facility"><i class="fa fa-angle-right"></i>Facilities</a></li>
+            <li><a href="https://ranchischool.metasofsda.in/photo-gallery"><i class="fa fa-angle-right"></i>Gallery</a></li>
+            <li><a href="https://ranchischool.metasofsda.in/current-openings"><i class="fa fa-angle-right"></i>Career</a></li>
+            <li><a href="https://ranchischool.metasofsda.in/alumni-list"><i class="fa fa-angle-right"></i>Our Alumni</a></li>
+            <li><a href="https://ranchischool.metasofsda.in/FAQs/"><i class="fa fa-angle-right"></i>FAQs</a></li>
+          </ul>
+        </div>
+        <div>
+          <h5>Important Links</h5>
+          <ul>
+            <li><a href="https://ranchischool.metasofsda.in/school-timings"><i class="fa fa-angle-right"></i>School Timings</a></li>
+            <li><a href="https://ranchischool.metasofsda.in/fee-structure"><i class="fa fa-angle-right"></i>Fee Structure</a></li>
+            <li><a href="#pay"><i class="fa fa-angle-right"></i>Pay Fees Online</a></li>
+            <li><a href="https://ranchischool.metasofsda.in/Circulars/"><i class="fa fa-angle-right"></i>Circulars</a></li>
+            <li><a href="https://ranchischool.metasofsda.in/Syllabus/"><i class="fa fa-angle-right"></i>Syllabus</a></li>
+            <li><a href="https://ranchischool.metasofsda.in/Examstimetable/"><i class="fa fa-angle-right"></i>Exam Timetable</a></li>
+          </ul>
+        </div>
+        <div>
+          <h5>Location</h5>
+          <iframe class="map" src="https://www.google.com/maps?q=Metas+Adventist+School,+Ranchi&output=embed" title="Map" loading="lazy"></iframe>
+          <ul class="social">
+            <li><a href="#" aria-label="Facebook"><i class="fa fa-facebook"></i></a></li>
+            <li><a href="#" aria-label="Twitter"><i class="fa fa-twitter"></i></a></li>
+            <li><a href="#" aria-label="Instagram"><i class="fa fa-instagram"></i></a></li>
+            <li><a href="#" aria-label="YouTube"><i class="fa fa-youtube"></i></a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="bottom"><div class="container">
+      Copyright 2020 METAS ADVENTIST SCHOOL All rights reserved. &nbsp;|&nbsp;
+      <a href="#terms">Terms &amp; Conditions</a> &nbsp;|&nbsp; <a href="#refund">Refund Policy</a>
+    </div></div>
+  </footer>
+  <script>
+    // close the menu once a choice is made (a <details> does not do that by itself)
+    document.querySelector('.menu ul').onclick = () => { document.querySelector('.menu').open = false; };
+    // let the pay iframe grow with its content: the pay page posts its height whenever it changes
+    const pay = document.querySelector('iframe.pay');
+    addEventListener('message', e => {
+      if (e.origin === new URL(pay.src).origin && e.data?.type === 'facts-pay:height') pay.style.height = e.data.height + 'px';
+    });
+  </script>
+</body>
+</html>

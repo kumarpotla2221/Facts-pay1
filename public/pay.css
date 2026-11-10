@@ -1,0 +1,149 @@
+:root { --c: #0a2c57; --a: #10a5e8; --bg: #f3f5f8; --line: #d9dee5; --ink: #1f2937; --muted: #64748b;
+        --charged: #b91c1c; --paid: #15803d; }   /* money colours: what is owed (red), what was paid (green) */
+* { box-sizing: border-box; }
+body { margin: 0; font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; color: var(--ink); background: #fff; }
+a { color: inherit; text-decoration: none; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 0 16px; }
+[hidden] { display: none !important; }
+.framed .chrome { display: none; }
+
+/* ---- school header (hidden when embedded) ---- */
+.topbar { background: var(--c); color: #fff; font-size: 14px; }
+.topbar .wrap { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 72px; flex-wrap: wrap; }
+.topbar nav a { margin-right: 18px; }
+.topbar nav a::before { content: "• "; color: var(--a); }
+.contacts { display: flex; align-items: center; gap: 22px; flex-wrap: wrap; }
+.contact { display: flex; align-items: center; gap: 10px; }
+.contact svg { width: 38px; height: 38px; padding: 8px; border-radius: 50%; background: var(--a); }
+.contact small { display: block; font-size: 12px; opacity: .9; }
+.contact b { font-size: 15px; }
+.home { background: var(--a); padding: 10px 26px; border-radius: 3px; font-weight: 700; }
+.banner { background: var(--a); color: #fff; }
+.banner .wrap { display: flex; align-items: center; gap: 24px; padding-top: 14px; padding-bottom: 14px; }
+.banner img { max-height: 56px; max-width: 100%; height: auto; width: auto; background: #fff; padding: 6px 10px; border-radius: 6px; }
+.banner div { flex: 1; text-align: center; }
+.banner h2 { margin: 0; font-size: 26px; text-transform: uppercase; letter-spacing: .5px; }
+.banner p { margin: 2px 0 0; font-size: 17px; font-weight: 600; }
+.hero { height: 240px; background: linear-gradient(120deg, var(--c), var(--a)); overflow: hidden; }
+.hero img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+/* ---- page ---- */
+main.wrap { padding-top: 56px; padding-bottom: 56px; text-align: center; }
+.framed main.wrap { padding-top: 16px; }
+h1 { margin: 0 0 18px; color: var(--c); font-size: 36px; font-weight: 800; text-transform: uppercase; letter-spacing: .3px; }
+.note { color: #1f3fbf; margin: 0 0 10px; }
+.card { max-width: 1000px; margin: 40px auto 0; background: #fff; padding: 28px; box-shadow: 0 6px 30px rgba(15, 35, 70, .08); text-align: left; }
+.framed .card { margin-top: 20px; padding: 0; box-shadow: none; }
+.panel { background: #efefef; padding: 24px; }
+.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px 28px; margin-bottom: 16px; }
+input, select { width: 100%; padding: 13px 14px; border: 1px solid transparent; background: #fff; font: inherit; font-size: 14px; font-weight: 600; color: var(--c); text-transform: uppercase; }
+input[type=email] { text-transform: none; }
+input::placeholder { color: #8a94a3; font-weight: 600; text-transform: uppercase; }
+input:focus { outline: 2px solid var(--a); }
+input[readonly] { color: var(--c); }button { padding: 13px 16px; border: 0; border-radius: 3px; font: inherit; font-size: 14px; font-weight: 700; text-transform: uppercase; color: #fff; cursor: pointer; }
+button.accent { background: var(--a); }
+button.ghost { background: #dfe3e8; color: #334155; }
+button:disabled { opacity: .55; }
+button:focus-visible { outline: 3px solid var(--a); outline-offset: 2px; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 20px -14px; }
+
+/* fee cards: read like a bill - name + switch, what it covers, amount due, how much to pay now */
+.fees { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; align-items: start; }
+.fee { display: flex; flex-direction: column; gap: 14px; padding: 20px; background: #fff; border: 1px solid var(--line); border-top: 4px solid var(--c); border-radius: 4px; transition: opacity .15s; }
+.fee:has(.switch:not(:checked)) { opacity: .5; }
+.fee-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; cursor: pointer; }
+.fee .name { font-size: 16px; font-weight: 700; color: var(--c); }
+.fee .lines { width: 100%; border-collapse: collapse; font-size: 14px; font-variant-numeric: tabular-nums; }
+.fee .lines td { padding: 6px 0; border-bottom: 1px dashed var(--line); }
+.fee .lines td:last-child { text-align: right; white-space: nowrap; padding-left: 12px; }
+.fee-sum { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding-top: 2px; font-size: 14px; color: var(--muted); }
+.fee-sum strong { font-size: 22px; color: var(--ink); font-variant-numeric: tabular-nums; }
+.fee-pay { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding-top: 12px; border-top: 1px solid var(--line); font-size: 14px; font-weight: 600; color: var(--ink); }
+.fee-pay small { display: block; font-size: 12px; font-weight: 400; color: var(--muted); }
+.fee-pay input { width: 150px; padding: 10px 12px; border-color: var(--line); font-size: 17px; text-align: right; text-transform: none; }
+.fee-pay input:read-only { border-color: transparent; background: #f3f5f8; }
+.fee-pay input:invalid { outline: 2px solid #b91c1c; }
+
+/* loading placeholder, same shape as a fee card */
+.skel { cursor: default; gap: 12px; }
+.skel .bar { display: block; height: 14px; border-radius: 3px; background: linear-gradient(90deg, #eceff3 0%, #f6f8fa 50%, #eceff3 100%) 0 0 / 200% 100%; animation: shimmer 1.2s linear infinite; }
+.skel .w60 { width: 60%; height: 18px; margin-bottom: 6px; }
+.skel .w40 { width: 40%; height: 22px; }
+.skel .end { align-self: flex-end; margin-top: 6px; }
+@keyframes shimmer { to { background-position: -200% 0; } }
+
+/* spinner on the button that is waiting */
+button.busy { cursor: wait; opacity: .85; }
+button.busy::before { content: ""; display: inline-block; width: 14px; height: 14px; margin: 0 10px -2px 0; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: spin .7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .skel .bar, button.busy::before { animation: none; } }
+
+.switch { flex: none; appearance: none; width: 56px; height: 30px; border-radius: 30px; background: #c3c9d1; position: relative; cursor: pointer; transition: background .15s; padding: 0; border: 0; }
+.switch::after { content: ""; position: absolute; top: 4px; left: 4px; width: 22px; height: 22px; border-radius: 50%; background: #fff; transition: left .15s; }
+.switch:checked { background: #1677e8; }
+.switch:checked::after { left: 30px; }
+.switch:focus-visible { outline: 2px solid var(--a); outline-offset: 2px; }
+.empty { grid-column: 1 / -1; padding: 20px; text-align: center; color: #15803d; font-weight: 600; background: #fff; }
+
+/* the student's statement for the year, collapsed under the fields */
+.stmt { background: #fff; border: 1px solid var(--line); border-radius: 4px; }
+.stmt summary { padding: 13px 16px; font-size: 14px; font-weight: 700; text-transform: uppercase; color: var(--c); cursor: pointer; }
+.statement { width: 100%; border-collapse: collapse; font-size: 14px; font-variant-numeric: tabular-nums; }
+.statement th, .statement td { padding: 8px 16px; border-top: 1px solid var(--line); text-align: left; vertical-align: top; }
+.statement th:nth-child(n+3), .statement td:nth-child(n+3) { text-align: right; white-space: nowrap; }
+.statement thead th { font-size: 12px; text-transform: uppercase; color: var(--muted); }
+.statement tbody small { display: block; color: var(--muted); }
+.statement tfoot th { color: var(--c); }
+.charged { color: var(--charged); }
+.paid { color: var(--paid); }
+.statement tbody tr:has(td.paid:not(:empty)) { background: #f0fdf4; }   /* a payment row, tinted */
+.stmt button { margin: 14px 16px 16px; }
+/* paid this year and total due, above what is being paid now */
+.sum { display: grid; grid-template-columns: 1fr auto; gap: 6px 12px; margin: 0 0 12px; padding: 0 18px; font-size: 15px; }
+.sum dt { color: var(--muted); }
+.sum dd { margin: 0; font-weight: 700; font-variant-numeric: tabular-nums; }
+.total-row { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin: 0 0 16px; padding: 14px 18px; background: #fff; font-size: 17px; font-weight: 600; color: var(--c); }
+.total { font-size: 30px; font-weight: 800; color: var(--paid); font-variant-numeric: tabular-nums; }
+.proceed { width: 100%; padding: 16px; font-size: 16px; background: var(--c); }
+.proceed:disabled { cursor: not-allowed; }
+.gw { margin-top: 18px; padding: 18px; background: #fff; border: 1px dashed #94a3b8; text-align: center; }
+.gw .grid { margin: 0; }
+.gw select { width: auto; display: inline-block; padding: 6px 10px; border: 1px solid var(--line); margin-left: 6px; }
+.muted { color: var(--muted); margin: 0 0 6px; }
+.err { background: #fef2f2; color: var(--charged); padding: 10px 14px; margin: 0 0 16px; }
+
+/* receipt */
+.receipt { max-width: 640px; margin: 32px auto 0; padding: 28px; border: 1px solid var(--line); text-align: left; background: #fff; }
+.receipt h2 { margin: 0; color: var(--c); text-transform: uppercase; font-size: 20px; text-align: center; }
+.receipt > .muted { text-align: center; }
+.receipt h3 { text-align: center; margin: 16px 0; font-size: 16px; text-transform: uppercase; letter-spacing: 1px; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); padding: 6px 0; }
+.receipt dl { display: grid; grid-template-columns: 140px 1fr; gap: 6px 12px; margin: 0 0 18px; }
+.receipt dt { color: var(--muted); }
+.receipt dd { margin: 0; font-weight: 600; }
+.receipt table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+.receipt th, .receipt td { padding: 8px; border-bottom: 1px solid var(--line); text-align: left; }
+.receipt th:last-child, .receipt td:last-child { text-align: right; }
+.receipt tfoot th { font-size: 16px; border-bottom: 0; }
+.receipt tfoot td { border-bottom: 0; color: var(--muted); }
+
+footer { background: var(--c); color: #fff; font-size: 14px; }
+footer .wrap { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding-top: 22px; padding-bottom: 22px; }
+
+@media (max-width: 700px) {
+  .grid { grid-template-columns: 1fr; }
+  .topbar nav { display: none; }
+  .banner .wrap { flex-direction: column; gap: 8px; }
+  .banner h2 { font-size: 19px; }
+  .banner p { font-size: 14px; }
+  .hero { height: 140px; }
+  h1 { font-size: 26px; }
+  .card { padding: 12px; }
+  .panel { padding: 16px; }
+}
+
+/* "Download Receipt" = browser print / save as PDF: only the receipt */
+@media print {
+  body > *:not(main), main > *:not(#receipt), #print { display: none !important; }
+  main { padding: 0; }
+  .receipt { border: 0; margin: 0; max-width: none; }
+}

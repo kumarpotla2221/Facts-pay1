@@ -1,0 +1,20 @@
+[
+  {
+    "slug": "ranchi",
+    "name": "Metas Adventist School, Ranchi",
+    "color": "#0f4b70",
+    "origins": ["https://ranchischool.metasofsda.in", "http://localhost:5003"],
+    "address": "Bariyatu Road, Ranchi - 9",
+    "phone": "+91 7050555223",
+    "email": "metasschoolranchi@gmail.com",
+    "minPayPercent": 50,
+    "db": {
+      "host": "mssql",
+      "port": 1433,
+      "name": "ranchi_school",
+      "user": "pay_ranchi",
+      "passwordEnv": "PAY_RANCHI_PASS",
+      "admin": { "user": "sa", "passwordEnv": "SA_PASSWORD" }
+    }
+  }
+]

@@ -1,0 +1,5 @@
+.env
+database_backup/*.bak
+backup-before-refactor.tgz
+node_modules
+dist

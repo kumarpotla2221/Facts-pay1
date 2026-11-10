@@ -1,0 +1,11 @@
+node_modules
+dist
+.env
+.git
+*.md
+database_backup
+backup-before-refactor.tgz
+test
+docs
+research_notes
+reports

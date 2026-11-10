@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>School Fee Payment</title>
+  <link rel="stylesheet" href="/assets/pay.css">
+  <!-- inside an iframe the school's own site already shows its header: hide ours -->
+  <script src="/assets/frame.js"></script>
+</head>
+<body>
+  <header class="chrome">
+    <div class="topbar"><div class="wrap">
+      <nav><a class="site" target="_top">About Us</a><a class="site" target="_top">Contact Us</a></nav>
+      <div class="contacts">
+        <a id="mailBox" class="contact" hidden>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18v12H3z M3 6l9 7 9-7" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
+          <span><small>Drop us an email:</small><b id="mail"></b></span>
+        </a>
+        <a id="telBox" class="contact" hidden>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.6 10.8a15 15 0 0 0 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1A17 17 0 0 1 3 4c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1z" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
+          <span><small>Call us:</small><b id="tel"></b></span>
+        </a>
+        <a class="home site" target="_top">HOME</a>
+      </div>
+    </div></div>
+    <div class="banner"><div class="wrap">
+      <img id="logo" alt="" hidden>
+      <div><h2 id="school">School Fee Payment</h2><p id="addr"></p></div>
+    </div></div>
+    <div class="hero"><img id="hero" alt="" hidden></div>
+  </header>
+
+  <main class="wrap">
+    <h1>School Fee Payment</h1>
+    <p class="note">Transaction charges by payment gateway are applicable for online fee payment.<br>
+      Kindly check final transaction amount before making the payment.</p>
+    <p class="note">You may also pay School fee offline at School fee counters.</p>
+
+    <div class="card"><div class="panel">
+      <p id="err" class="err" role="alert" hidden></p>
+
+      <form id="lookup" class="grid">
+        <input id="adm" placeholder="ADMISSION NUMBER (e.g. 26/39)" aria-label="Admission number" autocomplete="off" maxlength="20" required>
+        <button class="accent">Get fee details</button>
+      </form>
+      <div class="grid">
+        <input id="sname" placeholder="STUDENT NAME" aria-label="Student name" readonly tabindex="-1">
+        <input id="scls" placeholder="CLASS" aria-label="Class" readonly tabindex="-1">
+        <input id="email" type="email" placeholder="EMAIL (to receive the PDF receipt)" aria-label="Email for the PDF receipt (optional)" maxlength="120" autocomplete="email">
+        <input id="phone" type="tel" placeholder="PHONE" aria-label="Phone (optional)" maxlength="14" autocomplete="tel">
+      </div>
+
+      <div id="dues" hidden>
+        <!-- the student's account for the year, collapsed: every charge and payment, and the same as a PDF -->
+        <details id="stmt" class="stmt" hidden>
+          <summary>View statement</summary>
+          <table class="statement">
+            <thead><tr><th>Date</th><th>Particulars</th><th class="charged">Charged</th><th class="paid">Paid</th></tr></thead>
+            <tbody id="sRows"></tbody>
+            <tfoot>
+              <tr><th colspan="2">Total</th><th id="sCharged" class="charged"></th><th id="sPaid" class="paid"></th></tr>
+              <tr><th colspan="3">Balance due</th><th id="sBal"></th></tr>
+            </tfoot>
+          </table>
+          <button id="pdf" class="ghost">Download PDF</button>
+        </details>
+        <hr>
+        <div id="list" class="fees"></div>
+        <div id="dueFoot">
+          <hr>
+          <dl class="sum">
+            <dt>Paid this academic year</dt><dd id="paidYear" class="paid"></dd>
+            <dt>Total due</dt><dd id="totalDue" class="charged"></dd>
+          </dl>
+          <p class="total-row"><span>Total to pay</span><output id="total" class="total">₹0</output></p>
+          <button id="pay" class="proceed">Pay</button>
+        </div>
+      </div>
+
+      <div id="gw" class="gw" hidden>
+        <p class="muted">TEST GATEWAY (mock). No real money.</p>
+        <p>Pay <strong id="gwAmt"></strong> by
+          <select id="mode" aria-label="Payment mode"><option>UPI</option><option>Card</option><option value="NetBanking">Net banking</option></select></p>
+        <div class="grid"><button id="ok" class="accent">Simulate success</button><button id="fail" class="ghost">Simulate failure</button></div>
+      </div>
+    </div></div>
+
+    <section id="receipt" class="receipt" hidden>
+      <h2 id="rSchool"></h2>
+      <p id="rAddr" class="muted"></p>
+      <h3>Fee Receipt</h3>
+      <dl>
+        <dt>Receipt no.</dt><dd id="rNo"></dd>
+        <dt>Date</dt><dd id="rDate"></dd>
+        <dt>Admission no.</dt><dd id="rAdm"></dd>
+        <dt>Student</dt><dd id="rName"></dd>
+        <dt>Class</dt><dd id="rCls"></dd>
+        <dt>Payment ref.</dt><dd id="rRef"></dd>
+      </dl>
+      <table><thead><tr><th>Particulars</th><th>Amount</th></tr></thead><tbody id="rItems"></tbody>
+        <tfoot><tr><th>Total paid</th><th id="rTotal"></th></tr><tr><td>Balance due after this payment</td><td id="rBal" class="charged"></td></tr></tfoot></table>
+      <p id="rMail" class="muted" hidden></p>
+      <button id="print" class="proceed">Download Receipt</button>
+    </section>
+  </main>
+
+  <footer class="chrome"><div class="wrap"><span id="copy"></span><span>Online payments by Facts Pay</span></div></footer>
+  <script src="/assets/pay.js"></script>
+</body>
+</html>
