@@ -12,8 +12,7 @@
       "host": "eu-az-sql-serv1.database.windows.net",
       "port": 1433,
       "name": "d9ykaxajbim4dd3",
-      "user": "um7giegaz1yv77d",
-      "passwordEnv": "PAY_RANCHI_PASS"
+      "user": "um7giegaz1yv77d"
     }
   }
 ]

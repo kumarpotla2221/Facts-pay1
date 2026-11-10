@@ -17,22 +17,20 @@ const connect = (login: { user: string; passwordEnv: string }) => new sql.Connec
 }).connect();
 
 let app: FastifyInstance;
-let payDb: sql.ConnectionPool;                             // the web login, exactly as the API connects
-let adminDb: sql.ConnectionPool;                           // the owner: test setup only (the web login cannot read any table)
+let payDb: sql.ConnectionPool;                             // the school's one login, exactly as the API connects: reads its tables, writes only pay_order
 let adm: string;                                           // a student who still owes something
 const mails: SendMailOptions[] = [];
 
 beforeAll(async () => {
   app = await buildApp({ logger: false, mailTransport: { sendMail: async (m: SendMailOptions) => { mails.push(m); return {}; } } as never });
   payDb = await connect(school.db);
-  adminDb = await connect(school.db.admin ?? school.db);
-  const { recordset } = await adminDb.query<{ student_id: string }>`SELECT TOP 40 student_id FROM students ORDER BY student_id DESC`;
+  const { recordset } = await payDb.query<{ student_id: string }>`SELECT TOP 40 student_id FROM students ORDER BY student_id DESC`;
   for (const { student_id } of recordset) {
-    if ((await getDues(payDb, student_id))?.items.length) { adm = student_id; break; }
+    if ((await getDues(payDb, school.duesSql, student_id))?.items.length) { adm = student_id; break; }
   }
   if (!adm) throw new Error('No student with dues left in the Ranchi database');
 }, 60_000);
-afterAll(async () => { await Promise.all([app.close(), payDb.close(), adminDb.close()]); });
+afterAll(async () => { await Promise.all([app.close(), payDb.close()]); });
 
 const get = async (url: string) => { const r = await app.inject({ method: 'GET', url }); return { code: r.statusCode, body: r.json() }; };
 const post = async (url: string, payload: unknown) => { const r = await app.inject({ method: 'POST', url, payload: payload as object }); return { code: r.statusCode, body: r.json() }; };
@@ -79,7 +77,7 @@ describe('payment flow', () => {
   it('part payment by the school rule, then the rest; rejects tampering, expiry and replay; emails a PDF receipt', async () => {
     const { body: d } = await dues(adm);
     const first: Due = d.items[0];
-    const erpReceipts = async () => (await adminDb.query<{ n: number }>`SELECT COUNT(*) AS n FROM fee_receipt_doc fd JOIN students s ON s.sub_acct_code IN
+    const erpReceipts = async () => (await payDb.query<{ n: number }>`SELECT COUNT(*) AS n FROM fee_receipt_doc fd JOIN students s ON s.sub_acct_code IN
       (SELECT sub_acct_code FROM fee_receipt_tran t WHERE t.doc_type_code = fd.doc_type_code AND t.doc_no = fd.doc_no AND t.finance_year = fd.finance_year) WHERE s.student_id = ${adm}`).recordset[0]!.n;
     const erpBefore = await erpReceipts();
 
@@ -113,7 +111,7 @@ describe('payment flow', () => {
     expect((await pay(failed.orderId)).code).toBe(409);                                             // a failed order is dead
 
     const { body: expired } = await order(pays);
-    await adminDb.query`UPDATE pay_order SET expires_at = DATEADD(minute, -1, SYSUTCDATETIME()) WHERE order_id = ${expired.orderId}`;
+    await payDb.query`UPDATE pay_order SET expires_at = DATEADD(minute, -1, SYSUTCDATETIME()) WHERE order_id = ${expired.orderId}`;
     expect((await pay(expired.orderId)).body.error).toMatch(/expired/);
 
     // Race: a double click on one order. Exactly one payment may win. A second order made beforehand in another
@@ -133,7 +131,7 @@ describe('payment flow', () => {
     expect(await erpReceipts()).toBe(erpBefore);
 
     // Only the orders THIS test made (the student may carry older online payments in a reused dev database).
-    const { recordset: rows } = await adminDb.query<{ order_id: string; status: string; receipt_no: string | null; class: string; section: string; payment_mode: string | null }>`
+    const { recordset: rows } = await payDb.query<{ order_id: string; status: string; receipt_no: string | null; class: string; section: string; payment_mode: string | null }>`
       SELECT order_id, status, receipt_no, class, section, payment_mode FROM pay_order WHERE adm_no = ${adm}`;
     const byStatus = (status: string) => rows.filter(r => r.status === status).map(r => r.order_id).sort();
     expect(byStatus('PAID')).toEqual(expect.arrayContaining([part.orderId, winner.orderId]));        // the part payment + the winner
@@ -143,7 +141,7 @@ describe('payment flow', () => {
 
     // Once the school approves a payment and creates its own records, Facts Pay trusts those records again (the ERP in this
     // test was never updated, so the dues reappear as they were).
-    await adminDb.query`UPDATE pay_order SET approved_at = SYSUTCDATETIME(), erp_receipt_no = 'FR-test' WHERE order_id IN (${part.orderId}, ${winner.orderId})`;
+    await payDb.query`UPDATE pay_order SET approved_at = SYSUTCDATETIME(), erp_receipt_no = 'FR-test' WHERE order_id IN (${part.orderId}, ${winner.orderId})`;
     expect((await dues(adm)).body.items.map((i: Due) => [i.id, i.paise])).toEqual(d.items.map((i: Due) => [i.id, i.paise]));
 
     await vi.waitFor(() => expect(mails).toHaveLength(2));                                          // one receipt email per payment, with the PDF
@@ -167,15 +165,3 @@ describe('embedding', () => {
   });
 });
 
-// Only where the web login is separate from the owner. The demo copy on Heroku has one login for both (no db.admin).
-describe.skipIf(!school.db.admin)('least privilege', () => {
-  it('the web login can run the pay procedures but cannot touch a table or write a receipt directly', async () => {
-    const denied = (query: string) => expect(payDb.request().query(query)).rejects.toThrow(/permission/i);
-    await denied('SELECT TOP 1 * FROM students');
-    await denied('UPDATE document SET next_no = 1');
-    await denied('SELECT TOP 1 * FROM pay_order');
-    await denied(`UPDATE pay_order SET status = 'PAID'`);
-    await denied(`INSERT fee_receipt_doc (school_code) VALUES ('01')`);                                     // never into the ERP
-    expect(await getDues(payDb, 'NO-SUCH-ADM')).toBeNull();
-  });
-});

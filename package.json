@@ -10,8 +10,6 @@
     "start": "node dist/server.js",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "db:deploy": "tsx --env-file=.env tools/db.ts deploy",
-    "db:status": "tsx --env-file=.env tools/db.ts status",
     "demo-students": "tsx --env-file=.env tools/demo-students.ts"
   },
   "dependencies": {

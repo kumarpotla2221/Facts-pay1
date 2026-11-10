@@ -21,11 +21,9 @@ const root = new URL('../', import.meta.url);
 /** The hosted pay page + per-school branding (public/schools/<slug>/logo.png). */
 export const publicDir = fileURLToPath(new URL('public/', root));
 
-// ---- the schools we serve: schools.json. Onboarding a school = its schools-sql/<slug>.sql + one entry here ----
-const login = z.object({
-  user: z.string().min(1),
-  passwordEnv: z.string().min(1),     // NAME of the env var holding the password. Passwords never go in this file.
-});
+// ---- the schools we serve: schools.json + schools-sql/<slug>.sql. Onboarding a school = one entry here + that file ----
+// The database password is NOT in that file. It is an env var named by one rule, the same for every school:
+//   PAY_<SLUG>_PASS   ('st-marys' -> PAY_ST_MARYS_PASS)
 const schoolSchema = z.object({
   slug: z.string().regex(/^[a-z0-9-]{1,50}$/),
   name: z.string().min(1),
@@ -37,15 +35,19 @@ const schoolSchema = z.object({
   email: z.string().optional(),
   /** Part payment: the least a parent may pay of each due, as a percentage of it. Leave out = every due in full only. */
   minPayPercent: z.int().min(1).max(100).default(100),
-  db: login.extend({                  // the web login: may only run the pay_* procedures
+  db: z.object({
     host: z.string().min(1),
     port: z.number().default(1433),
     name: z.string().min(1),
-    /** A db_owner login, used ONLY by `npm run db:deploy` / `db:status` to install the SQL. Never by the API.
-     *  Leave it out only where the web login itself owns the database (the demo copy on Heroku), never for a real school. */
-    admin: login.optional(),
+    /** The one login, created by the school with schools-sql/setup.sql: reads its tables, writes only pay_order. */
+    user: z.string().min(1),
   }),
-});
+}).transform(s => ({
+  ...s,
+  db: { ...s.db, passwordEnv: `PAY_${s.slug.toUpperCase().replace(/-/g, '_')}_PASS` },
+  /** The school's own dues query (schools-sql/<slug>.sql), sent as is with @adm_no bound. Contract: schools-sql/README.md. */
+  duesSql: readFileSync(new URL(`schools-sql/${s.slug}.sql`, root), 'utf8'),
+}));
 export type School = z.infer<typeof schoolSchema>;
 
 export const schools: School[] = z.array(schoolSchema)

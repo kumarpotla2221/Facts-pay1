@@ -2,10 +2,10 @@ import sql from 'mssql';
 import { HttpError } from './errors.js';
 
 /**
- * Everything the API ever does in a school's database (contract: schools-sql/README.md): the school's own
- * pay_get_dues (read only) and the common pay_* procedures around the pay_order table (common.sql).
- * The web login can run these and nothing else: no table access, and nothing is ever written into the school's
- * own records. Values are always bound as typed parameters.
+ * Everything the API ever does in a school's database: the school's own dues query (schools-sql/<slug>.sql, read only)
+ * and a few statements on our pay_order table (schools-sql/setup.sql). Nothing else is ever installed there, and the
+ * login can write nothing but pay_order: nothing is ever written into the school's own records. Values are always
+ * bound as typed parameters.
  */
 export type Db = sql.ConnectionPool;
 
@@ -21,9 +21,12 @@ export interface Snapshot { student: Student; items: (Due & { minPaise: number; 
 /** Due ids come from the school DB and travel in a comma list: letters, digits, _ and - only. */
 export const ID_RE = /^[A-Za-z0-9_-]{1,20}$/;
 
-/** The student, their unpaid dues and their statement as the school's records have them, or null for an unknown admission number. */
-export async function getDues(db: Db, adm: string): Promise<Dues | null> {
-  const r = await db.request().input('adm_no', sql.VarChar(20), adm).execute('pay_get_dues');
+/**
+ * The student, their unpaid dues and their statement as the school's records have them, or null for an unknown
+ * admission number. `duesSql` is the school's query, sent as is with @adm_no bound (contract: schools-sql/README.md).
+ */
+export async function getDues(db: Db, duesSql: string, adm: string): Promise<Dues | null> {
+  const r = await db.request().input('adm_no', sql.VarChar(20), adm).query(duesSql);
   const [students, dues, lines, entries] = r.recordsets as unknown as [
     Student[],
     { due_id: string; type: Due['type']; label: string; amount_paise: number }[],
@@ -48,7 +51,9 @@ export async function getDues(db: Db, adm: string): Promise<Dues | null> {
 export interface Unapproved { receiptNo: string; paidAt: Date; mode: string; paise: number; pays: { id: string; paise: number }[] }
 export async function getUnapproved(db: Db, adm: string): Promise<Unapproved[]> {
   const r = await db.request().input('adm_no', sql.VarChar(20), adm)
-    .execute<{ receipt_no: string; paid_at: Date; payment_mode: string; due_ids: string; amount_paise: number }>('pay_get_unapproved');
+    .query<{ receipt_no: string; paid_at: Date; payment_mode: string; due_ids: string; amount_paise: number }>(
+      `SELECT receipt_no, paid_at, payment_mode, due_ids, amount_paise FROM pay_order
+        WHERE adm_no = @adm_no AND status = 'PAID' AND approved_at IS NULL ORDER BY paid_at`);
   return r.recordset.map(o => ({
     receiptNo: o.receipt_no, paidAt: o.paid_at, mode: o.payment_mode, paise: o.amount_paise,
     pays: o.due_ids.split(',').map(pair => { const [id, paise] = pair.split('='); return { id: id!, paise: Number(paise) }; }),
@@ -72,38 +77,48 @@ export async function createOrder(db: Db, o: {
     .input('payer_phone', sql.VarChar(15), o.phone ?? null)
     .input('snapshot', sql.NVarChar(sql.MAX), JSON.stringify(o.snapshot))
     .input('ttl_minutes', sql.Int, o.ttlMinutes)
-    .execute('pay_create_order');
+    .query(`INSERT pay_order (order_id, adm_no, student_name, class, section, due_ids, amount_paise, payer_email, payer_phone, snapshot, expires_at)
+            VALUES (@order_id, @adm_no, @student_name, @class, @section, @due_ids, @amount_paise, @payer_email, @payer_phone, @snapshot,
+                    DATEADD(minute, @ttl_minutes, SYSUTCDATETIME()))`);
 }
 
 export interface PaidOrder { receiptNo: string; admNo: string; paise: number; payerEmail: string | null; snapshot: Snapshot }
 
-/** The payment succeeded at the gateway: the order becomes PAID with a receipt number, once. Only one caller can ever win. */
+/**
+ * The payment succeeded at the gateway: the order becomes PAID with the next receipt number, once. One UPDATE does it,
+ * so only one caller can ever win: a double click, a replay, an expired or a failed order matches no row and is refused.
+ */
 export async function settleOrder(db: Db, orderId: string, gatewayRef: string, mode: string): Promise<PaidOrder> {
-  const r = await refusalsAsHttpErrors(() => db.request()
+  const r = await db.request()
     .input('order_id', sql.VarChar(36), orderId)
     .input('gateway_ref', sql.VarChar(64), gatewayRef)
     .input('payment_mode', sql.VarChar(20), mode)
-    .execute<{ receipt_no: string; adm_no: string; amount_paise: number; payer_email: string | null; snapshot: string }>('pay_settle'));
-  const row = r.recordset[0]!;
+    .query<{ receipt_no: string | null; adm_no: string; amount_paise: number; payer_email: string | null; snapshot: string; status: string }>(`
+      DECLARE @paid TABLE (receipt_no varchar(40), adm_no varchar(20), amount_paise int, payer_email varchar(120), snapshot nvarchar(max));
+      UPDATE pay_order
+         SET status = 'PAID', receipt_no = 'OL-' + CAST(NEXT VALUE FOR pay_receipt_seq AS varchar(12)),
+             gateway_ref = @gateway_ref, payment_mode = @payment_mode, paid_at = SYSUTCDATETIME()
+      OUTPUT inserted.receipt_no, inserted.adm_no, inserted.amount_paise, inserted.payer_email, inserted.snapshot INTO @paid
+       WHERE order_id = @order_id AND status = 'CREATED' AND expires_at > SYSUTCDATETIME();
+      -- One row: what was just paid (receipt_no set), or why not (receipt_no NULL, status says). No row: no such order.
+      SELECT p.receipt_no, p.adm_no, p.amount_paise, p.payer_email, p.snapshot, o.status
+        FROM pay_order o LEFT JOIN @paid p ON 1 = 1 WHERE o.order_id = @order_id`);
+  const row = r.recordset[0];
+  if (!row?.receipt_no) throw refusal(row?.status);
   return { receiptNo: row.receipt_no, admNo: row.adm_no, paise: row.amount_paise, payerEmail: row.payer_email, snapshot: JSON.parse(row.snapshot) as Snapshot };
 }
 
 /** The payment failed or was cancelled at the gateway. A CREATED order becomes FAILED. Refused (409) if it is already PAID. */
 export async function failOrder(db: Db, orderId: string): Promise<void> {
-  await refusalsAsHttpErrors(() => db.request().input('order_id', sql.VarChar(36), orderId).execute('pay_fail_order'));
+  const r = await db.request().input('order_id', sql.VarChar(36), orderId).query<{ status: string }>(`
+    UPDATE pay_order SET status = 'FAILED' WHERE order_id = @order_id AND status = 'CREATED';
+    SELECT status FROM pay_order WHERE order_id = @order_id`);
+  const status = r.recordset[0]?.status;
+  if (status !== 'FAILED') throw refusal(status);   // a late "failed" must never be answered with "nothing was charged" for a PAID order
 }
 
-/** The procedures refuse with THROW <number>. These are expected outcomes with a message that is safe to show. */
-const REFUSALS: Record<number, [status: number, message: string]> = {
-  50010: [404, 'Order not found'],                      // ORDER_NOT_FOUND
-  50011: [409, 'This order was already paid'],          // ORDER_ALREADY_PAID
-  50012: [409, 'Order expired or not payable'],         // ORDER_NOT_PAYABLE
-};
-async function refusalsAsHttpErrors<T>(run: () => Promise<T>): Promise<T> {
-  try { return await run(); }
-  catch (err) {
-    const refusal = REFUSALS[(err as { number?: number }).number ?? 0];
-    if (refusal) throw new HttpError(...refusal);
-    throw err;
-  }
-}
+/** Why an order could not be settled or failed: expected outcomes with a message that is safe to show. */
+const refusal = (status: string | undefined) =>
+  status === undefined ? new HttpError(404, 'Order not found')
+  : status === 'PAID' ? new HttpError(409, 'This order was already paid')
+  : new HttpError(409, 'Order expired or not payable');

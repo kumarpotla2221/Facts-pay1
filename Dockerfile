@@ -14,6 +14,7 @@ COPY --from=build /app/package.json /app/schools.json ./
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/dist ./dist
 COPY --from=build /app/public ./public
+COPY --from=build /app/schools-sql ./schools-sql
 COPY --from=build /app/demo-site ./demo-site
 USER node
 EXPOSE 4000

@@ -9,15 +9,16 @@ due, by the school's own rule (Ranchi: at least half), and can see and download 
     parent ─▶ school website ─iframe─▶ /pay/<slug>            the pay page (public/)   demo: /view/<slug> stands in for the website
                                           │
                                           ▼  /api/<slug>/...   the API (src/)
-                                 the school's own database     stored procedures (schools-sql/)
+                                 the school's own database     one login: reads the school's tables, writes only pay_order
 
-    1. lookup        pay_get_dues       the student, what they owe (and the least they may pay of each), the statement
-                     pay_get_unapproved   minus online payments the school has not approved yet
-    2. create order  pay_create_order   which dues and how much of each, checked against step 1, never trusted from the browser
-    3. settle        pay_settle         marks the order PAID with a receipt number (OL-1001), the mode and the gateway ref;
-                                        then the PDF receipt is emailed. The school approves the payment from pay_order.
-There is **one database per school and nothing else**: no central database, no ORM, no migrations. The API keeps no state,
-so you can run as many copies of it as you need.
+    1. lookup        schools-sql/<slug>.sql   the student, what they owe (and the least they may pay of each), the statement,
+                                              minus online payments in pay_order the school has not approved yet
+    2. create order  INSERT pay_order         which dues and how much of each, checked against step 1, never trusted from the browser
+    3. settle        UPDATE pay_order         marks the order PAID with a receipt number (OL-1001), the mode and the gateway ref,
+                                              exactly once; then the PDF receipt is emailed. The school approves the payment from pay_order.
+There is **one database per school and nothing else**: no central database, no ORM, no migrations. Nothing is installed in a
+school's database except the `pay_order` table ([schools-sql/setup.sql](schools-sql/setup.sql), run once by the school itself);
+the dues query lives here, in this repository. The API keeps no state, so you can run as many copies of it as you need.
 
 ## Project map
     src/                 the API (Fastify + TypeScript), read in this order:
@@ -25,17 +26,16 @@ so you can run as many copies of it as you need.
       app.ts               wiring: security headers, rate limit, pay page, error handler
       routes.ts            HTTP: validates input, calls payments
       payments.ts          the flow: lookup -> createOrder -> settle
-      school-db.ts         the only code that talks to a school database: the procedure calls
+      school-db.ts         the only code that talks to a school database: the dues query and the pay_order statements
       schools.ts           slug -> school + its connection pool
-      config.ts            env vars + schools.json, validated at startup
+      config.ts            env vars, schools.json and each school's dues query, validated at startup
       mailer.ts, receipt-pdf.ts, statement-pdf.ts, errors.ts
     public/              the hosted pay page (plain HTML/CSS/JS). Branding: public/schools/<slug>/logo.png, hero.jpg
     schools.json         the schools we serve and how to reach each one's database
-    schools-sql/         README.md = the database contract · common.sql = same for every school (pay_order + approval)
-                         <slug>.sql = one per school, read only (ranchi.sql) · _template.sql = the empty shape to copy
+    schools-sql/         README.md = the database contract · setup.sql = what the school runs once (the login + pay_order)
+                         <slug>.sql = the school's dues query, one per school (ranchi.sql) · _template.sql = the empty shape to copy
     test/                pay.test.ts (integration, Ranchi DB) · receipt.test.ts (PDFs, no DB)
-    tools/               db.ts = `npm run db:deploy` / `db:status` (installs and checks the SQL in the school databases)
-                         DEV ONLY: demo-students.ts = `npm run demo-students` (Ranchi admission numbers that owe fees)
+    tools/               DEV ONLY: demo-students.ts = `npm run demo-students` (Ranchi admission numbers that owe fees)
     demo-site/           DEMO ONLY: stand-in for the school's own website, served by the api at /view/<slug>
 
 ## Run locally
@@ -60,37 +60,30 @@ and the pay page it frames is https://facts-pay-8f54f64208f2.herokuapp.com/pay/r
 (Heroku's registry refuses the OCI manifest Docker Desktop produces by default, hence the flags.)
 
 **The demo database on Heroku.** Heroku cannot reach a SQL Server on your laptop, so the app has the `mssql` add-on
-(Softtrends, an Azure SQL Database, Basic tier). It holds a copy of just the 12 Ranchi tables that `pay_get_dues` reads,
-copied with `bcp` from the local restore (an Azure SQL Database cannot restore a `.bak`), plus our `pay_*` objects and two
-demo-only indexes on `sub_acct_code`. The add-on chooses the server, database name and login (`heroku config:get MSSQL_TCP_URL
--a facts-pay`); they are the `db` entry in schools.json and its password is `PAY_RANCHI_PASS`. The add-on hands out one
-login that cannot create roles or users, so on that database there is no `facts_pay_role`: the api and `npm run db:deploy`
-both run as that login (fine for a demo copy, never for a school's real database).
+(Softtrends, an Azure SQL Database, Basic tier). It holds a copy of just the 12 Ranchi tables that the dues query reads,
+copied with `bcp` from the local restore (an Azure SQL Database cannot restore a `.bak`), plus our `pay_order` table, its
+receipt sequence and two demo-only indexes on `sub_acct_code`. The add-on chooses the server, database name and login
+(`heroku config:get MSSQL_TCP_URL -a facts-pay`); they are the `db` entry in schools.json and its password is `PAY_RANCHI_PASS`.
+That one login owns the whole demo database (fine for a demo copy; a real school creates the login with setup.sql).
 
     heroku config:set -a facts-pay PAY_RANCHI_PASS=<pw> SMTP_URL='smtps://USER:PASS@smtp.provider.com:465' MAIL_FROM='...' MOCK_GATEWAY=1
-For the real school, `db` in schools.json points at its own SQL Server, with a separate admin login for the deploy.
+For the real school, `db` in schools.json points at its own SQL Server and the login that setup.sql created there.
 
 ## Onboard a new school (no API code)
-Every school's database is different, so each school gets its own SQL file, always in the same shape.
-1. Copy [schools-sql/_template.sql](schools-sql/_template.sql) to `schools-sql/<slug>.sql` and write its one read-only
-   procedure against that school's tables ([schools-sql/README.md](schools-sql/README.md) is the contract,
+Every school's database is different, so each school gets its own dues query, always in the same shape.
+1. Get a copy of the school's database. Copy [schools-sql/_template.sql](schools-sql/_template.sql) to `schools-sql/<slug>.sql`
+   and write the dues query against the school's tables ([schools-sql/README.md](schools-sql/README.md) is the contract,
    [ranchi.sql](schools-sql/ranchi.sql) a complete worked example).
-2. Add the school to [schools.json](schools.json) with its `db`: the web login and a separate `admin` (db_owner) login for
-   the install, passwords in env. If parents may pay a due in parts, its `minPayPercent` (the least they may pay of each
-   due; leave it out for full payment only).
-3. `npm run db:deploy -- <slug>` installs the SQL in its database and checks it against the contract. Then create the
-   web login there and `ALTER ROLE facts_pay_role ADD MEMBER <login>`. Restart the API.
+2. The school runs [schools-sql/setup.sql](schools-sql/setup.sql) once, as its own administrator: it creates the `pay_order`
+   table and one login that can read the school's tables and write only `pay_order`. No administrator login is ever given
+   to Facts Pay.
+3. Add the school to [schools.json](schools.json) with its `db`; the password is the env var `PAY_<SLUG>_PASS`. If parents
+   may pay a due in parts, its `minPayPercent` (the least they may pay of each due; leave it out for full payment only).
+   Restart the API.
 4. Optional branding: `public/schools/<slug>/logo.png` (pay page, PDFs, email) and `hero.jpg`.
 5. School website: `<iframe src="https://pay.yourdomain/pay/<slug>">`, plus the 3-line `message` listener from
    [demo-site/index.html](demo-site/index.html) so the iframe grows with its content (no inner scrollbar on phones).
    Until then, `/view/<slug>` on the api is a stand-in for the school's website (it shows Ranchi's branding).
-
-## Keeping many school databases in step
-    npm run db:status              # every school: its version, out of date?, edited by hand in the database?
-    npm run db:deploy -- ranchi    # after changing SQL: deploy to ONE school and check it
-    npm run db:deploy              # then all the others (stops at the first failure)
-A deploy is one transaction per school and safe to repeat. It refuses a school file that breaks the contract and leaves
-that database exactly as it was.
 
 ## Ranchi (Metas ERP backup)
 The ERP is ledger-based: dues = outstanding **tuition** and **transport** balances, computed exactly like the school's own
@@ -104,12 +97,13 @@ students have a real date of birth (the rest hold placeholders such as `2000-01-
 parent mobile number. So date of birth and OTP both need the school to clean its data first; a personal pay link does not.
 
 ## Security (what is in place)
-- **Database:** the API's login can run five procedures and nothing else: no table access, and nothing is ever written into
-  the school's own records. The API never holds the SQL Server admin password.
+- **Database:** one login per school, created by the school itself with [setup.sql](schools-sql/setup.sql): it can read the
+  school's tables and write only `pay_order`. SQL Server enforces that nothing is ever written into the school's own records.
+  No administrator login is ever given to Facts Pay, and nothing of ours is installed in the database but that table.
 - **Money:** every amount is checked against the school database when the order is made (each due still owed, each amount
-  within the school's part-payment rule). `pay_settle` is one transaction that marks an order PAID exactly once, so a double
-  click or a replay can never produce two receipts. Two orders made in different tabs before either is paid can both go
-  through; the second becomes an overpayment the school sees when approving.
+  within the school's part-payment rule). Settling is one `UPDATE` that marks an order PAID exactly once, so a double click
+  or a replay can never produce two receipts. Two orders made in different tabs before either is paid can both go through;
+  the second becomes an overpayment the school sees when approving.
 - **Lookup:** admission number only, sent in a POST body (never a URL). Lookups and new orders are each limited to 30 per IP
   per 10 minutes.
 - **Browser:** strict CSP, only the school's own origins may iframe the page, DB values rendered as text only, global rate limit.

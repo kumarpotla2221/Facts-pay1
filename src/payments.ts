@@ -21,7 +21,7 @@ export class Payments {
   async lookup(slug: string, adm: string): Promise<Lookup> {
     const school = this.schools.get(slug);
     const db = await this.schools.db(school);
-    const dues = await getDues(db, adm);
+    const dues = await getDues(db, school.duesSql, adm);
     if (!dues) throw new HttpError(404, 'No student found for this admission number');
 
     // Online payments the school has not approved yet: its records still count them as owed, so take them off here
