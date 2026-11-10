@@ -17,7 +17,7 @@ export async function buildApp(opts: { logger?: boolean; mailTransport?: Pick<Tr
   const app = Fastify({ logger: opts.logger === false ? false : { level: config.LOG_LEVEL }, bodyLimit: 4096, trustProxy: config.TRUST_PROXY === '1' });
 
   const schools = new Schools(schoolList, {
-    dbHostOverride: config.SCHOOL_DB_HOST, trustCert: config.DB_TRUST_CERT === '1',
+    dbHostOverride: config.SCHOOL_DB_HOST, dbNameOverride: config.SCHOOL_DB_NAME, dbUserOverride: config.SCHOOL_DB_USER, trustCert: config.DB_TRUST_CERT === '1',
     onPoolError: (err, slug) => app.log.error({ err, school: slug }, 'school database connection error'),
   });
   const mailer = new Mailer(opts.mailTransport ?? (config.SMTP_URL ? nodemailer.createTransport(config.SMTP_URL) : undefined), config.MAIL_FROM, app.log);

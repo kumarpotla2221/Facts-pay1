@@ -8,7 +8,7 @@ export class Schools {
   // close pools that have been idle for a while.
   private pools = new Map<string, Promise<sql.ConnectionPool>>();
 
-  constructor(private list: School[], private opts: { dbHostOverride?: string; trustCert: boolean; onPoolError: (err: Error, slug: string) => void }) {}
+  constructor(private list: School[], private opts: { dbHostOverride?: string; dbNameOverride?: string; dbUserOverride?: string; trustCert: boolean; onPoolError: (err: Error, slug: string) => void }) {}
 
   get(slug: string): School {
     const school = this.list.find(s => s.slug === slug);
@@ -24,8 +24,8 @@ export class Schools {
       const p = new sql.ConnectionPool({
         server: this.opts.dbHostOverride ?? school.db.host,
         port: school.db.port,
-        database: school.db.name,
-        user: school.db.user,
+        database: this.opts.dbNameOverride ?? school.db.name,
+        user: this.opts.dbUserOverride ?? school.db.user,
         password,
         options: { encrypt: true, trustServerCertificate: this.opts.trustCert },
         pool: { max: 5 },

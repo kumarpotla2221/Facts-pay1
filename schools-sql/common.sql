@@ -127,9 +127,15 @@ BEGIN
    ORDER BY paid_at;
 END
 GO
-IF DATABASE_PRINCIPAL_ID('facts_pay_role') IS NULL CREATE ROLE facts_pay_role;
+-- The web login's role. A hosted database that hands out ONE login with no right to create roles (the Heroku MSSQL
+-- add-on used for the demo) skips this: there the API simply runs as that login.
+IF DATABASE_PRINCIPAL_ID('facts_pay_role') IS NULL AND HAS_PERMS_BY_NAME(NULL, 'DATABASE', 'CREATE ROLE') = 1
+  CREATE ROLE facts_pay_role;
 GO
-GRANT EXECUTE ON pay_create_order  TO facts_pay_role;
-GRANT EXECUTE ON pay_settle        TO facts_pay_role;
-GRANT EXECUTE ON pay_fail_order    TO facts_pay_role;
-GRANT EXECUTE ON pay_get_unapproved  TO facts_pay_role;
+IF DATABASE_PRINCIPAL_ID('facts_pay_role') IS NOT NULL
+BEGIN
+  GRANT EXECUTE ON pay_create_order   TO facts_pay_role;
+  GRANT EXECUTE ON pay_settle         TO facts_pay_role;
+  GRANT EXECUTE ON pay_fail_order     TO facts_pay_role;
+  GRANT EXECUTE ON pay_get_unapproved TO facts_pay_role;
+END

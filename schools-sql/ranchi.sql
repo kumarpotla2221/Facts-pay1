@@ -249,4 +249,4 @@ END
 GO
 
 
-GRANT EXECUTE ON pay_get_dues TO facts_pay_role;
+IF DATABASE_PRINCIPAL_ID('facts_pay_role') IS NOT NULL GRANT EXECUTE ON pay_get_dues TO facts_pay_role;   -- see common.sql

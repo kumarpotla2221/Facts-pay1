@@ -51,14 +51,27 @@ so you can run as many copies of it as you need.
 ## The api on Heroku, the school site local
 The api runs as a Docker image on Heroku (app `facts-pay`, https://facts-pay-8f54f64208f2.herokuapp.com). The school
 site stays local and frames that: `node demo-site/serve.js` (or `PAY_URL=http://localhost:4000 node demo-site/serve.js`
-to frame a local api). Heroku must be able to reach the school's SQL Server, so point `SCHOOL_DB_HOST` at it.
+to frame a local api).
 
-    heroku config:set -a facts-pay SCHOOL_DB_HOST=<sql server host> PAY_RANCHI_PASS=<web login password> \
-      SMTP_URL='smtps://USER:PASS@smtp.provider.com:465' MAIL_FROM='Facts Pay <you@provider.com>'
-    docker build --platform linux/amd64 -t registry.heroku.com/facts-pay/web . && docker push registry.heroku.com/facts-pay/web
+    docker buildx build --platform linux/amd64 --provenance=false --sbom=false \
+      --output type=image,oci-mediatypes=false,push=true -t registry.heroku.com/facts-pay/web .
     heroku container:release web -a facts-pay       # then: heroku logs --tail -a facts-pay
-`MOCK_GATEWAY=1` is already set there; add `DB_TRUST_CERT=1` only if the SQL Server has a self-signed certificate.
-The pay page only needs the school site's origin (`http://localhost:5003`) in schools.json, which it has.
+(Heroku's registry refuses the OCI manifest Docker Desktop produces by default, hence the flags.)
+
+**The demo database on Heroku.** Heroku cannot reach a SQL Server on your laptop, so the app has the `mssql` add-on
+(Softtrends, an Azure SQL Database, Basic tier). It holds a copy of just the 12 Ranchi tables that `pay_get_dues` reads,
+copied with `bcp` from the local restore (an Azure SQL Database cannot restore a `.bak`), plus our `pay_*` objects and two
+demo-only indexes on `sub_acct_code`. The add-on chooses the server, database name and admin login, so instead of editing
+schools.json the deploy and the api take them from the environment:
+
+    SCHOOL_DB_HOST=<server>.database.windows.net SCHOOL_DB_NAME=<db> SCHOOL_DB_ADMIN_USER=<admin> SA_PASSWORD=<admin pw> \
+      DB_TRUST_CERT=0 npm run db:deploy -- ranchi
+    heroku config:set -a facts-pay SCHOOL_DB_HOST=<server>.database.windows.net SCHOOL_DB_NAME=<db> \
+      SCHOOL_DB_USER=<admin> PAY_RANCHI_PASS=<admin pw> SMTP_URL='smtps://USER:PASS@smtp.provider.com:465' MAIL_FROM='...'
+The values come from `heroku config:get MSSQL_TCP_URL -a facts-pay`. The add-on hands out one login that cannot create
+roles or users, so on that database there is no `facts_pay_role`: the api runs as that login (fine for a demo copy,
+never for a school's real database). `MOCK_GATEWAY=1` is set.
+For the real school nothing of this applies: `SCHOOL_DB_HOST` simply points at the school's own SQL Server.
 
 ## Develop without the api container
     docker compose up -d mssql                      # database only

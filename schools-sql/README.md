@@ -54,7 +54,8 @@ Returns four result sets, in this order:
   unapproved payments off the dues and lists them on the statement (`pay_get_unapproved`). After approval, the school's
   own records are trusted.
 - `pay_deployment` — one row per deploy: the version that is installed.
-- role `facts_pay_role` — `EXECUTE` on the five procedures the API calls. No table access.
+- role `facts_pay_role` — `EXECUTE` on the five procedures the API calls. No table access. (A hosted database that
+  gives one login with no right to create roles, like the Heroku MSSQL add-on, skips the role; the API runs as that login.)
 
 ## What the deploy checks
 After installing the files, and before anything is kept, `npm run db:deploy` verifies that `pay_get_dues` runs and returns

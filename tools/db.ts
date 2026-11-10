@@ -29,7 +29,8 @@ function connect(school: School): Promise<sql.ConnectionPool> {
   const password = process.env[admin.passwordEnv];
   if (!password) throw new Error(`env var ${admin.passwordEnv} (admin password of ${school.slug}) is not set`);
   return new sql.ConnectionPool({
-    server: config.SCHOOL_DB_HOST ?? school.db.host, port: school.db.port, database: school.db.name, user: admin.user, password,
+    server: config.SCHOOL_DB_HOST ?? school.db.host, port: school.db.port, database: config.SCHOOL_DB_NAME ?? school.db.name,
+    user: config.SCHOOL_DB_ADMIN_USER ?? admin.user, password,
     options: { encrypt: true, trustServerCertificate: config.DB_TRUST_CERT === '1' }, requestTimeout: 120_000,
   }).connect();
 }
