@@ -1,33 +1,36 @@
-// Integration tests against the restored Ranchi DB (tools/restore-ranchi.sh).
-// WARNING: the payment test really pays one student's dues in ranchi_school. Re-run restore-ranchi.sh to reset.
+// Integration tests against the Ranchi database in schools.json (the demo copy on Heroku).
+// WARNING: the payment test really pays one student's dues there, then marks them approved so the dues come back.
 import { randomUUID } from 'node:crypto';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import type { SendMailOptions } from 'nodemailer';
 import sql from 'mssql';
 import { buildApp } from '../src/app.js';
+import { config, schools } from '../src/config.js';
 import { getDues, type Entry } from '../src/school-db.js';
 import type { Payable as Due } from '../src/payments.js';
 
-const connect = (user: string, password: string) => new sql.ConnectionPool({
-  server: 'localhost', port: 1433, database: 'ranchi_school', user, password, options: { encrypt: true, trustServerCertificate: true },
+const school = schools.find(s => s.slug === 'ranchi')!;
+const connect = (login: { user: string; passwordEnv: string }) => new sql.ConnectionPool({
+  server: school.db.host, port: school.db.port, database: school.db.name, user: login.user, password: process.env[login.passwordEnv],
+  options: { encrypt: true, trustServerCertificate: config.DB_TRUST_CERT === '1' },
 }).connect();
 
 let app: FastifyInstance;
 let payDb: sql.ConnectionPool;                             // the web login, exactly as the API connects
-let adminDb: sql.ConnectionPool;                           // sa: test setup only (the web login cannot read any table)
+let adminDb: sql.ConnectionPool;                           // the owner: test setup only (the web login cannot read any table)
 let adm: string;                                           // a student who still owes something
 const mails: SendMailOptions[] = [];
 
 beforeAll(async () => {
   app = await buildApp({ logger: false, mailTransport: { sendMail: async (m: SendMailOptions) => { mails.push(m); return {}; } } as never });
-  payDb = await connect('pay_ranchi', process.env.PAY_RANCHI_PASS!);
-  adminDb = await connect('sa', process.env.SA_PASSWORD!);
+  payDb = await connect(school.db);
+  adminDb = await connect(school.db.admin ?? school.db);
   const { recordset } = await adminDb.query<{ student_id: string }>`SELECT TOP 40 student_id FROM students ORDER BY student_id DESC`;
   for (const { student_id } of recordset) {
     if ((await getDues(payDb, student_id))?.items.length) { adm = student_id; break; }
   }
-  if (!adm) throw new Error('No student with dues left: re-run tools/restore-ranchi.sh');
+  if (!adm) throw new Error('No student with dues left in the Ranchi database');
 }, 60_000);
 afterAll(async () => { await Promise.all([app.close(), payDb.close(), adminDb.close()]); });
 
@@ -140,7 +143,7 @@ describe('payment flow', () => {
 
     // Once the school approves a payment and creates its own records, Facts Pay trusts those records again (the ERP in this
     // test was never updated, so the dues reappear as they were).
-    await adminDb.query`UPDATE pay_order SET approved_at = SYSUTCDATETIME(), erp_receipt_no = 'FR-test' WHERE adm_no = ${adm} AND status = 'PAID'`;
+    await adminDb.query`UPDATE pay_order SET approved_at = SYSUTCDATETIME(), erp_receipt_no = 'FR-test' WHERE order_id IN (${part.orderId}, ${winner.orderId})`;
     expect((await dues(adm)).body.items.map((i: Due) => [i.id, i.paise])).toEqual(d.items.map((i: Due) => [i.id, i.paise]));
 
     await vi.waitFor(() => expect(mails).toHaveLength(2));                                          // one receipt email per payment, with the PDF
@@ -164,7 +167,8 @@ describe('embedding', () => {
   });
 });
 
-describe('least privilege', () => {
+// Only where the web login is separate from the owner. The demo copy on Heroku has one login for both (no db.admin).
+describe.skipIf(!school.db.admin)('least privilege', () => {
   it('the web login can run the pay procedures but cannot touch a table or write a receipt directly', async () => {
     const denied = (query: string) => expect(payDb.request().query(query)).rejects.toThrow(/permission/i);
     await denied('SELECT TOP 1 * FROM students');

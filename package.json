@@ -12,8 +12,7 @@
     "test": "vitest run",
     "db:deploy": "tsx --env-file=.env tools/db.ts deploy",
     "db:status": "tsx --env-file=.env tools/db.ts status",
-    "up": "docker compose up --build -d",
-    "down": "docker compose down"
+    "demo-students": "tsx --env-file=.env tools/demo-students.ts"
   },
   "dependencies": {
     "@fastify/helmet": "^13.2.0",

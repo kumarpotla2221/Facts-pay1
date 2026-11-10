@@ -9,12 +9,11 @@
     "email": "metasschoolranchi@gmail.com",
     "minPayPercent": 50,
     "db": {
-      "host": "mssql",
+      "host": "eu-az-sql-serv1.database.windows.net",
       "port": 1433,
-      "name": "ranchi_school",
-      "user": "pay_ranchi",
-      "passwordEnv": "PAY_RANCHI_PASS",
-      "admin": { "user": "sa", "passwordEnv": "SA_PASSWORD" }
+      "name": "d9ykaxajbim4dd3",
+      "user": "um7giegaz1yv77d",
+      "passwordEnv": "PAY_RANCHI_PASS"
     }
   }
 ]

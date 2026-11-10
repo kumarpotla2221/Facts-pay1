@@ -24,13 +24,12 @@ function wanted(school: School) {
 
 /** Connects with the school's ADMIN login (db.admin in schools.json). The API never uses this login. */
 function connect(school: School): Promise<sql.ConnectionPool> {
-  const admin = school.db.admin;
-  if (!admin) throw new Error(`schools.json: "${school.slug}" has no db.admin login`);
+  const admin = school.db.admin ?? school.db;   // no separate admin login: the web login owns the database (the demo copy on Heroku)
   const password = process.env[admin.passwordEnv];
   if (!password) throw new Error(`env var ${admin.passwordEnv} (admin password of ${school.slug}) is not set`);
   return new sql.ConnectionPool({
-    server: config.SCHOOL_DB_HOST ?? school.db.host, port: school.db.port, database: config.SCHOOL_DB_NAME ?? school.db.name,
-    user: config.SCHOOL_DB_ADMIN_USER ?? admin.user, password,
+    server: school.db.host, port: school.db.port, database: school.db.name,
+    user: admin.user, password,
     options: { encrypt: true, trustServerCertificate: config.DB_TRUST_CERT === '1' }, requestTimeout: 120_000,
   }).connect();
 }

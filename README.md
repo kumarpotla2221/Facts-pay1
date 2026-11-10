@@ -35,18 +35,20 @@ so you can run as many copies of it as you need.
                          <slug>.sql = one per school, read only (ranchi.sql) · _template.sql = the empty shape to copy
     test/                pay.test.ts (integration, Ranchi DB) · receipt.test.ts (PDFs, no DB)
     tools/               db.ts = `npm run db:deploy` / `db:status` (installs and checks the SQL in the school databases)
-                         DEV ONLY: restore-ranchi.sh (loads the Ranchi backup) · demo-students.sh
+                         DEV ONLY: demo-students.ts = `npm run demo-students` (Ranchi admission numbers that owe fees)
     demo-site/           DEMO ONLY: stand-in for the school's own website, served by the api at /view/<slug>
 
-## Run everything (Docker)
-    cp .env.example .env                            # replace every CHANGE_ME; SMTP_URL = your SMTP provider
-    docker compose up -d mssql && sh tools/restore-ranchi.sh     # needs Node: it runs `npm run db:deploy`
-    docker compose up --build -d
-- School site (Ranchi)  http://localhost:4000/view/ranchi   `sh tools/demo-students.sh` prints admission numbers that owe fees
+## Run locally
+The api runs on your machine; the database is the Heroku demo copy (see "On Heroku"), so no SQL Server is needed here.
+
+    heroku config -a facts-pay --shell | grep -v '^MSSQL_' > .env   # the app's own settings (.env.example lists them)
+    npm install && npm run dev                                      # api on :4000 with reload
+- School site (Ranchi)  http://localhost:4000/view/ranchi
 - Pay page direct       http://localhost:4000/pay/ranchi
+- `npm run demo-students` prints admission numbers that owe fees
 - Receipt emails go straight through `SMTP_URL` (enter a real address on the pay page). Empty = no emails.
-- Stop: `docker compose down` (data kept) | wipe: `docker compose down -v`
-- Reset test payments: re-run `sh tools/restore-ranchi.sh`
+- `npm test` (integration tests: PAYS one student's dues in that database, then marks them approved so they come back)
+- `npm run typecheck`. To eyeball the PDF designs: `RECEIPT_OUT=/tmp/r.pdf STATEMENT_OUT=/tmp/s.pdf npx vitest run test/receipt.test.ts`.
 
 ## On Heroku
 The api runs as a Docker image on Heroku (app `facts-pay`). The demo school site is https://facts-pay-8f54f64208f2.herokuapp.com/view/ranchi
@@ -60,32 +62,22 @@ and the pay page it frames is https://facts-pay-8f54f64208f2.herokuapp.com/pay/r
 **The demo database on Heroku.** Heroku cannot reach a SQL Server on your laptop, so the app has the `mssql` add-on
 (Softtrends, an Azure SQL Database, Basic tier). It holds a copy of just the 12 Ranchi tables that `pay_get_dues` reads,
 copied with `bcp` from the local restore (an Azure SQL Database cannot restore a `.bak`), plus our `pay_*` objects and two
-demo-only indexes on `sub_acct_code`. The add-on chooses the server, database name and admin login, so instead of editing
-schools.json the deploy and the api take them from the environment:
+demo-only indexes on `sub_acct_code`. The add-on chooses the server, database name and login (`heroku config:get MSSQL_TCP_URL
+-a facts-pay`); they are the `db` entry in schools.json and its password is `PAY_RANCHI_PASS`. The add-on hands out one
+login that cannot create roles or users, so on that database there is no `facts_pay_role`: the api and `npm run db:deploy`
+both run as that login (fine for a demo copy, never for a school's real database).
 
-    SCHOOL_DB_HOST=<server>.database.windows.net SCHOOL_DB_NAME=<db> SCHOOL_DB_ADMIN_USER=<admin> SA_PASSWORD=<admin pw> \
-      DB_TRUST_CERT=0 npm run db:deploy -- ranchi
-    heroku config:set -a facts-pay SCHOOL_DB_HOST=<server>.database.windows.net SCHOOL_DB_NAME=<db> \
-      SCHOOL_DB_USER=<admin> PAY_RANCHI_PASS=<admin pw> SMTP_URL='smtps://USER:PASS@smtp.provider.com:465' MAIL_FROM='...'
-The values come from `heroku config:get MSSQL_TCP_URL -a facts-pay`. The add-on hands out one login that cannot create
-roles or users, so on that database there is no `facts_pay_role`: the api runs as that login (fine for a demo copy,
-never for a school's real database). `MOCK_GATEWAY=1` is set.
-For the real school nothing of this applies: `SCHOOL_DB_HOST` simply points at the school's own SQL Server.
-
-## Develop without the api container
-    docker compose up -d mssql                      # database only
-    npm install && npm run dev                      # api on :4000 with reload
-    npm test                                        # integration tests: PAYS one Ranchi student's dues
-    npm run typecheck
-To eyeball the PDF designs: `RECEIPT_OUT=/tmp/r.pdf STATEMENT_OUT=/tmp/s.pdf npx vitest run test/receipt.test.ts`.
+    heroku config:set -a facts-pay PAY_RANCHI_PASS=<pw> SMTP_URL='smtps://USER:PASS@smtp.provider.com:465' MAIL_FROM='...' MOCK_GATEWAY=1
+For the real school, `db` in schools.json points at its own SQL Server, with a separate admin login for the deploy.
 
 ## Onboard a new school (no API code)
 Every school's database is different, so each school gets its own SQL file, always in the same shape.
 1. Copy [schools-sql/_template.sql](schools-sql/_template.sql) to `schools-sql/<slug>.sql` and write its one read-only
    procedure against that school's tables ([schools-sql/README.md](schools-sql/README.md) is the contract,
    [ranchi.sql](schools-sql/ranchi.sql) a complete worked example).
-2. Add the school to [schools.json](schools.json) with its `db` logins (passwords go in env) and, if parents may pay a due
-   in parts, its `minPayPercent` (the least they may pay of each due; leave it out for full payment only).
+2. Add the school to [schools.json](schools.json) with its `db`: the web login and a separate `admin` (db_owner) login for
+   the install, passwords in env. If parents may pay a due in parts, its `minPayPercent` (the least they may pay of each
+   due; leave it out for full payment only).
 3. `npm run db:deploy -- <slug>` installs the SQL in its database and checks it against the contract. Then create the
    web login there and `ALTER ROLE facts_pay_role ADD MEMBER <login>`. Restart the API.
 4. Optional branding: `public/schools/<slug>/logo.png` (pay page, PDFs, email) and `hero.jpg`.

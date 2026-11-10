@@ -8,7 +8,7 @@ export class Schools {
   // close pools that have been idle for a while.
   private pools = new Map<string, Promise<sql.ConnectionPool>>();
 
-  constructor(private list: School[], private opts: { dbHostOverride?: string; dbNameOverride?: string; dbUserOverride?: string; trustCert: boolean; onPoolError: (err: Error, slug: string) => void }) {}
+  constructor(private list: School[], private opts: { trustCert: boolean; onPoolError: (err: Error, slug: string) => void }) {}
 
   get(slug: string): School {
     const school = this.list.find(s => s.slug === slug);
@@ -22,10 +22,10 @@ export class Schools {
       const password = process.env[school.db.passwordEnv];
       if (!password) throw new Error(`Env var ${school.db.passwordEnv} (DB password of ${school.slug}) is not set`);
       const p = new sql.ConnectionPool({
-        server: this.opts.dbHostOverride ?? school.db.host,
+        server: school.db.host,
         port: school.db.port,
-        database: this.opts.dbNameOverride ?? school.db.name,
-        user: this.opts.dbUserOverride ?? school.db.user,
+        database: school.db.name,
+        user: school.db.user,
         password,
         options: { encrypt: true, trustServerCertificate: this.opts.trustCert },
         pool: { max: 5 },

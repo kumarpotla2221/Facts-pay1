@@ -8,12 +8,6 @@ const envSchema = z.object({
   MOCK_GATEWAY: z.enum(['0', '1']).default('0'),
   TRUST_PROXY: z.enum(['0', '1']).default('0'),   // 1 when behind nginx/ALB so rate limiting sees the real client IP
   DB_TRUST_CERT: z.enum(['0', '1']).default('0'), // 1 = accept the SQL Server's self-signed certificate (dev)
-  // A copy of a school's database that is not where schools.json says (dev: Docker `mssql` vs localhost; the demo on
-  // Heroku: its MSSQL add-on picks the server and the database name). Set these and schools.json is left alone.
-  SCHOOL_DB_HOST: z.string().optional().transform(v => v || undefined),
-  SCHOOL_DB_NAME: z.string().optional().transform(v => v || undefined),
-  SCHOOL_DB_USER: z.string().optional().transform(v => v || undefined),         // its password still comes from db.passwordEnv
-  SCHOOL_DB_ADMIN_USER: z.string().optional().transform(v => v || undefined),   // deploy tool only: the admin login there
   LOG_LEVEL: z.string().default('info'),
   // Receipt emails, straight through an SMTP provider. Unset = no emails. e.g. smtps://user:pass@smtp.gmail.com:465
   SMTP_URL: z.string().optional().transform(v => v || undefined),
@@ -47,7 +41,8 @@ const schoolSchema = z.object({
     host: z.string().min(1),
     port: z.number().default(1433),
     name: z.string().min(1),
-    /** A db_owner login, used ONLY by `npm run db:deploy` / `db:status` to install the SQL. Never by the API. */
+    /** A db_owner login, used ONLY by `npm run db:deploy` / `db:status` to install the SQL. Never by the API.
+     *  Leave it out only where the web login itself owns the database (the demo copy on Heroku), never for a real school. */
     admin: login.optional(),
   }),
 });
