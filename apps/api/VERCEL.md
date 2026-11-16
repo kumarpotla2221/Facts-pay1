@@ -35,14 +35,16 @@ Open these paths on the deployment's HTTPS URL:
 - `/health` returns `{"ok":true}`. This checks the application process, not the database.
 - `/pay/ranchi` displays the payment page.
 - `/view/ranchi` displays the demo school website.
-- `/api/ranchi/info` returns school branding without connecting to the database.
+- `/api/ranchi/info` returns school branding and checkout availability without connecting to the database.
 
-Student lookup, statements, orders, and payments remain unavailable until a reachable database is configured. The current SQL Server address `127.0.0.1` refers to the Vercel function itself after deployment; it cannot reach SQL Server on your laptop.
+Student lookup and statements require a reachable database. Online checkout also requires a payment gateway. The SQL Server address `127.0.0.1` refers to the Vercel function itself after deployment; it cannot reach SQL Server on your laptop.
 
-## Connect Supabase in the next phase
+## Connect Supabase
 
-Supabase uses PostgreSQL. This API currently uses the `mssql` driver and T-SQL, so adding a Supabase URL alone will not connect it. The next phase is to migrate the restored school database, convert the database adapter and queries, and verify balances and payment settlement against PostgreSQL. Store the resulting connection credentials only in backend environment variables.
+The API supports a Supabase PostgreSQL copy of the Ranchi data through `PAY_RANCHI_DATABASE_URL`. Follow the [Supabase guide](SUPABASE.md) to migrate a restored SQL Server backup, validate balances, and configure the restricted backend login. Store the resulting credentials only in backend environment variables.
 
 After the API is connected and verified, set `EXPO_PUBLIC_API_URL=https://YOUR-PROJECT.vercel.app` in `apps/mobile/.env`, then restart Expo or rebuild the installed app. Keep database credentials out of the mobile environment.
 
-The current checkout is still a demo payment implementation. Real payment gateway integration is required before taking live payments. The API's in-memory rate limits are per function instance; use shared rate limiting or platform controls before opening payment endpoints to production traffic.
+The current checkout is a demo payment implementation. With `MOCK_GATEWAY=0`, school info reports `checkout.mode: "unavailable"`, the web page disables checkout, and order creation returns HTTP 503 before touching the database. Fee lookup and statement PDFs remain available. The demo settlement endpoint stays disabled (HTTP 403). Set `MOCK_GATEWAY=1` only against a disposable test database: simulated success marks orders paid and reduces displayed balances without collecting money.
+
+A real payment gateway must be integrated before live checkout can be enabled. The API's in-memory rate limits are per function instance; use shared rate limiting or platform controls before opening payment endpoints to production traffic.

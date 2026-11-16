@@ -24,7 +24,10 @@ const selected = () => items.filter(i => $('c_' + i.id).checked);
 const paying = i => Math.round($('p_' + i.id).value * 100) || 0;   // what the parent typed for a due, in paise
 const refreshTotal = () => {
   const s = selected(), t = rs(sum(s, paying));
-  $('total').textContent = t; $('pay').textContent = s.length ? 'Pay ' + t : 'Select a fee to pay'; $('pay').disabled = !s.length;
+  const available = school.checkout?.mode === 'demo';
+  $('total').textContent = t;
+  $('pay').textContent = !available ? 'Online payments unavailable' : s.length ? 'Pay ' + t : 'Select a fee to pay';
+  $('pay').disabled = !available || !s.length || $('pay').classList.contains('busy');
 };
 const el = (tag, className, text) => Object.assign(document.createElement(tag), className && { className }, text != null && { textContent: text });
 // placeholder cards shaped like the real ones while the school DB answers
@@ -48,6 +51,8 @@ asset($('logo'), 'logo.png');
 asset($('hero'), 'hero.jpg');
 api('info').then(i => {
   school = i;
+  $('checkoutNotice').textContent = i.checkout?.message || 'Online payments are currently unavailable. Please pay at the school fee counter.';
+  refreshTotal();
   $('school').textContent = i.name; $('addr').textContent = i.address || '';
   document.title = i.name + ' - Fee Payment';
   document.documentElement.style.setProperty('--c', i.color);
@@ -55,7 +60,10 @@ api('info').then(i => {
   if (i.email) { $('mail').textContent = i.email; $('mailBox').href = 'mailto:' + i.email; $('mailBox').hidden = false; }
   if (i.website) for (const a of document.querySelectorAll('a.site')) a.href = i.website;
   if (i.phone) { $('tel').textContent = i.phone; $('telBox').href = 'tel:' + i.phone.replace(/\s/g, ''); $('telBox').hidden = false; }
-}).catch(() => {});
+}).catch(() => {
+  $('checkoutNotice').textContent = 'Payment availability could not be checked. Refresh the page or contact the school.';
+  refreshTotal();
+});
 
 // ---- lookup ----
 $('lookup').onsubmit = run($('lookup').querySelector('button'), async () => {
@@ -125,6 +133,7 @@ $('pdf').onclick = run($('pdf'), async () => {
 
 // ---- order + (mock) gateway ----
 $('pay').onclick = run($('pay'), async () => {
+  if (school.checkout?.mode !== 'demo') throw new Error(school.checkout?.message || 'Online payments are currently unavailable.');
   const chosen = selected();
   for (const i of chosen) if (!$('p_' + i.id).reportValidity()) return;   // the browser points at the amount and says why
   const email = $('email').value.trim(), phone = $('phone').value.replace(/[\s-]/g, '');
