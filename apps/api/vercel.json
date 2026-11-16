@@ -1,6 +1,9 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "fastify",
+  "env": {
+    "NODE_OPTIONS": "--experimental-require-module"
+  },
   "installCommand": "cd ../.. && npm ci --workspace=@facts-pay/api --include-workspace-root=false",
   "buildCommand": "npm run build"
 }
