@@ -33,8 +33,7 @@
 
   <main class="wrap">
     <h1>School Fee Payment</h1>
-    <p class="note">Transaction charges by payment gateway are applicable for online fee payment.<br>
-      Kindly check final transaction amount before making the payment.</p>
+    <p id="checkoutNotice" class="note" role="status">Checking online payment availability...</p>
     <p class="note">You may also pay School fee offline at School fee counters.</p>
 
     <div class="card"><div class="panel">
@@ -74,7 +73,7 @@
             <dt>Total due</dt><dd id="totalDue" class="charged"></dd>
           </dl>
           <p class="total-row"><span>Total to pay</span><output id="total" class="total">₹0</output></p>
-          <button id="pay" class="proceed">Pay</button>
+          <button id="pay" class="proceed" disabled>Checking payment availability...</button>
         </div>
       </div>
 

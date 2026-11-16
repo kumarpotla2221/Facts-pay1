@@ -21,11 +21,14 @@ const settleB = z.object({ outcome: z.enum(['success', 'fail']), mode: z.string(
 
 export function payRoutes(app: FastifyInstance, deps: { payments: Payments; schools: Schools; config: Config }) {
   const { payments, schools, config } = deps;
+  const checkout = config.MOCK_GATEWAY === '1'
+    ? { mode: 'demo', message: 'Demo checkout only. No money will be charged.' }
+    : { mode: 'unavailable', message: 'Online payments are currently unavailable. Please pay at the school fee counter.' };
 
   /** What the pay page needs to brand itself. */
   app.get('/api/:slug/info', async req => {
     const s = schools.get(slugP.parse(req.params).slug);
-    return { name: s.name, color: s.color, address: s.address, phone: s.phone, email: s.email, website: s.origins[0] ?? null };
+    return { name: s.name, color: s.color, address: s.address, phone: s.phone, email: s.email, website: s.origins[0] ?? null, checkout };
   });
 
   // The admission number is the only check (no second factor yet), so the routes that reveal something about a
@@ -48,6 +51,8 @@ export function payRoutes(app: FastifyInstance, deps: { payments: Payments; scho
 
   app.post('/api/:slug/orders', perStudentLimit, async req => {
     const { slug } = slugP.parse(req.params);
+    schools.get(slug);
+    if (checkout.mode === 'unavailable') throw new HttpError(503, checkout.message);
     const { adm, pays, email, phone } = orderB.parse(req.body);
     return payments.createOrder(slug, adm, pays, { email, phone });
   });
