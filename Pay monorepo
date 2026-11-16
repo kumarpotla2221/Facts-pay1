@@ -1,0 +1,72 @@
+ .dockerignore                                      |    20 [32m+[m[31m-[m
+ .easignore                                         |    61 [32m+[m
+ .gitignore                                         |     7 [32m+[m
+ Dockerfile                                         |    25 [32m+[m[31m-[m
+ README.md                                          |   209 [32m+[m[31m-[m
+ .env.example => apps/api/.env.example              |     0
+ apps/api/README.md                                 |   126 [32m+[m
+ {demo-site => apps/api/demo-site}/index.html       |     0
+ apps/api/package.json                              |    34 [32m+[m
+ apps/api/public/fonts/OFL.txt                      |    93 [32m+[m
+ apps/api/public/fonts/Poppins-Bold.ttf             |   Bin [31m0[m -> [32m155996[m bytes
+ apps/api/public/fonts/Poppins-ExtraBold.ttf        |   Bin [31m0[m -> [32m154836[m bytes
+ apps/api/public/fonts/Poppins-Regular.ttf          |   Bin [31m0[m -> [32m160316[m bytes
+ apps/api/public/fonts/Poppins-SemiBold.ttf         |   Bin [31m0[m -> [32m157312[m bytes
+ {public => apps/api/public}/frame.js               |     0
+ {public => apps/api/public}/index.html             |     0
+ {public => apps/api/public}/pay.css                |     6 [32m+[m[31m-[m
+ {public => apps/api/public}/pay.js                 |     0
+ .../api/public}/schools/ranchi/logo.png            |   Bin
+ {schools-sql => apps/api/schools-sql}/README.md    |     0
+ .../api/schools-sql}/_template.sql                 |     0
+ {schools-sql => apps/api/schools-sql}/ranchi.sql   |     0
+ {schools-sql => apps/api/schools-sql}/setup.sql    |     0
+ schools.json => apps/api/schools.json              |     6 [32m+[m[31m-[m
+ {src => apps/api/src}/app.ts                       |     0
+ {src => apps/api/src}/config.ts                    |     2 [32m+[m[31m-[m
+ {src => apps/api/src}/errors.ts                    |     0
+ {src => apps/api/src}/mailer.ts                    |     0
+ {src => apps/api/src}/payments.ts                  |     0
+ {src => apps/api/src}/receipt-pdf.ts               |     0
+ {src => apps/api/src}/routes.ts                    |     0
+ {src => apps/api/src}/school-db.ts                 |     0
+ {src => apps/api/src}/schools.ts                   |     0
+ {src => apps/api/src}/server.ts                    |     0
+ {src => apps/api/src}/statement-pdf.ts             |     0
+ apps/api/test/app.test.ts                          |    34 [32m+[m
+ {test => apps/api/test}/pay.test.ts                |     0
+ {test => apps/api/test}/receipt.test.ts            |     0
+ .../api/tsconfig.build.json                        |     0
+ tsconfig.json => apps/api/tsconfig.json            |     0
+ vitest.config.ts => apps/api/vitest.config.ts      |     0
+ apps/mobile/.claude/settings.json                  |     5 [32m+[m
+ apps/mobile/.env.example                           |     6 [32m+[m
+ apps/mobile/.gitignore                             |    46 [32m+[m
+ apps/mobile/AGENTS.md                              |    41 [32m+[m
+ apps/mobile/App.tsx                                |   275 [32m+[m
+ apps/mobile/LICENSE                                |    21 [32m+[m
+ apps/mobile/README.md                              |    83 [32m+[m
+ apps/mobile/app.config.js                          |     9 [32m+[m
+ apps/mobile/app.json                               |    31 [32m+[m
+ apps/mobile/assets/android-icon-background.png     |   Bin [31m0[m -> [32m17549[m bytes
+ apps/mobile/assets/android-icon-foreground.png     |   Bin [31m0[m -> [32m78796[m bytes
+ apps/mobile/assets/android-icon-monochrome.png     |   Bin [31m0[m -> [32m4140[m bytes
+ apps/mobile/assets/favicon.png                     |   Bin [31m0[m -> [32m1129[m bytes
+ apps/mobile/assets/fonts/OFL.txt                   |    93 [32m+[m
+ apps/mobile/assets/fonts/Poppins-Bold.ttf          |   Bin [31m0[m -> [32m155996[m bytes
+ apps/mobile/assets/fonts/Poppins-ExtraBold.ttf     |   Bin [31m0[m -> [32m154836[m bytes
+ apps/mobile/assets/fonts/Poppins-Regular.ttf       |   Bin [31m0[m -> [32m160316[m bytes
+ apps/mobile/assets/fonts/Poppins-SemiBold.ttf      |   Bin [31m0[m -> [32m157312[m bytes
+ apps/mobile/assets/icon.png                        |   Bin [31m0[m -> [32m393493[m bytes
+ apps/mobile/assets/splash-icon.png                 |   Bin [31m0[m -> [32m17547[m bytes
+ apps/mobile/eas.json                               |    21 [32m+[m
+ apps/mobile/eslint.config.js                       |    10 [32m+[m
+ apps/mobile/index.ts                               |     8 [32m+[m
+ apps/mobile/package.json                           |    34 [32m+[m
+ apps/mobile/src/api.ts                             |    42 [32m+[m
+ apps/mobile/test/mobile-api.test.ts                |    62 [32m+[m
+ apps/mobile/tsconfig.json                          |     6 [32m+[m
+ apps/mobile/vitest.config.mts                      |     5 [32m+[m
+ package-lock.json                                  | 10203 [32m++++++++++++++++++[m[31m-[m
+ package.json                                       |    38 [32m+[m[31m-[m
+ 71 files changed, 11482 insertions(+), 180 deletions(-)
