@@ -13,9 +13,9 @@ import { Payments } from './payments.js';
 import { payRoutes } from './routes.js';
 import { Schools } from './schools.js';
 
-/** Builds the whole server. Tests pass a fake mail transport; everything else comes from config. */
-export async function buildApp(opts: { logger?: boolean; mailTransport?: Pick<Transporter, 'sendMail'> } = {}) {
-  const app = Fastify({ logger: opts.logger === false ? false : { level: config.LOG_LEVEL }, bodyLimit: 4096, trustProxy: config.TRUST_PROXY === '1' });
+/** Builds the server; the runtime entrypoint can supply Fastify explicitly for framework detection. */
+export async function buildApp(opts: { logger?: boolean; mailTransport?: Pick<Transporter, 'sendMail'>; createServer?: typeof Fastify } = {}) {
+  const app = (opts.createServer ?? Fastify)({ logger: opts.logger === false ? false : { level: config.LOG_LEVEL }, bodyLimit: 4096, trustProxy: config.TRUST_PROXY === '1' });
 
   const schools = new Schools(schoolList, {
     trustCert: config.DB_TRUST_CERT === '1',

@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { z } from 'zod';
 
@@ -20,6 +20,8 @@ export type Config = z.infer<typeof envSchema>;
 const root = new URL('../', import.meta.url);
 /** The hosted pay page + per-school branding (public/schools/<slug>/logo.png). */
 export const publicDir = fileURLToPath(new URL('public/', root));
+// Fastify receives this path through another module; expose the directory to serverless file tracing.
+readdirSync(new URL('public/', root));
 
 // ---- the schools we serve: schools.json + schools-sql/<slug>.sql. Onboarding a school = one entry here + that file ----
 // The database password is NOT in that file. It is an env var named by one rule, the same for every school:
