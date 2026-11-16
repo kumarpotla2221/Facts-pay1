@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 const script = readFileSync(new URL('../public/pay.js', import.meta.url), 'utf8');
 
-function page(mode: 'demo' | 'unavailable' | 'error') {
+function page(mode: 'demo' | 'unavailable' | 'error', admission = '') {
   const elements = new Map<string, ReturnType<typeof element>>();
   function element() {
     const classes = new Set<string>();
@@ -19,10 +19,11 @@ function page(mode: 'demo' | 'unavailable' | 'error') {
     if (!elements.has(id)) elements.set(id, element());
     return elements.get(id)!;
   }
+  get('adm').value = admission;
   const fetch = vi.fn(async () => {
     if (mode === 'error') throw new Error('Network unavailable');
     return { ok: true, headers: { get: () => 'application/json' }, json: async () => ({
-      name: 'Synthetic school', color: '#000000', checkout: { mode, message: mode === 'demo' ? 'Demo checkout only.' : 'Online payments are currently unavailable.' },
+      name: 'Synthetic school', color: '#000000', checkout: { mode, demoAdmission: mode === 'demo' ? 'DEMO001' : undefined, message: mode === 'demo' ? 'Demo checkout only.' : 'Online payments are currently unavailable.' },
     }) };
   });
   const context = vm.createContext({
@@ -58,10 +59,18 @@ describe('payment-page checkout availability', () => {
   it('enables explicitly configured demo checkout and keeps the button locked while a request is running', async () => {
     const p = page('demo');
     await vi.waitFor(() => expect(p.get('checkoutNotice').textContent).toContain('Demo checkout'));
+    expect(p.get('checkoutNotice').textContent).toContain('DEMO001');
+    expect(p.get('adm').value).toBe('DEMO001');
     p.selectFee();
     expect(p.get('pay').disabled).toBe(false);
     p.get('pay').classList.add('busy');
     p.selectFee();
     expect(p.get('pay').disabled).toBe(true);
+  });
+
+  it('preserves an admission number already entered while school info loads', async () => {
+    const p = page('demo', 'DEMO002');
+    await vi.waitFor(() => expect(p.get('checkoutNotice').textContent).toContain('Demo checkout'));
+    expect(p.get('adm').value).toBe('DEMO002');
   });
 });

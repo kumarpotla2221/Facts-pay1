@@ -87,6 +87,8 @@ Each app owns its dependencies. Add or update backend dependencies with `npm ins
 
 ## Deployment
 
+For a presentation with sample students and simulated payments, see the [isolated demo guide](apps/api/DEMO.md).
+
 For Supabase migration and the private backend database connection, follow the [Supabase guide](apps/api/SUPABASE.md).
 It explains converting a restored SQL Server backup, validating the copied data, and configuring a limited application login.
 

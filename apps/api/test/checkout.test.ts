@@ -14,7 +14,7 @@ function appWithCheckout(mock: '0' | '1') {
     settle: vi.fn(),
   };
   const schools = new Schools(schoolList, { trustCert: false, onPoolError: () => {} });
-  payRoutes(app, { payments: payments as unknown as Payments, schools, config: { ...config, MOCK_GATEWAY: mock } });
+  payRoutes(app, { payments: payments as unknown as Payments, schools, config: { ...config, MOCK_GATEWAY: mock, DEMO_ADMISSION: 'DEMO001' } });
   app.setErrorHandler((error, _req, reply) => {
     if (error instanceof HttpError) return reply.code(error.status).send({ error: error.message });
     return reply.code(500).send({ error: 'Unexpected test error' });
@@ -31,6 +31,7 @@ describe('checkout availability', () => {
     try {
       const info = await app.inject({ method: 'GET', url: `/api/${slug}/info` });
       expect(info.json().checkout).toMatchObject({ mode: 'unavailable' });
+      expect(info.json().checkout.demoAdmission).toBeUndefined();
       const order = await app.inject({ method: 'POST', url: `/api/${slug}/orders`, payload });
       expect(order.statusCode).toBe(503);
       expect(order.json().error).toContain('school fee counter');
@@ -58,7 +59,7 @@ describe('checkout availability', () => {
     const { app, payments } = appWithCheckout('1');
     try {
       const info = await app.inject({ method: 'GET', url: `/api/${slug}/info` });
-      expect(info.json().checkout).toMatchObject({ mode: 'demo' });
+      expect(info.json().checkout).toMatchObject({ mode: 'demo', demoAdmission: 'DEMO001' });
       const order = await app.inject({ method: 'POST', url: `/api/${slug}/orders`, payload });
       expect(order.statusCode).toBe(200);
       expect(payments.createOrder).toHaveBeenCalledOnce();
