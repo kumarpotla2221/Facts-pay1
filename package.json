@@ -3,31 +3,21 @@
   "version": "0.2.0",
   "private": true,
   "type": "module",
+  "workspaces": ["apps/*"],
   "engines": { "node": ">=22" },
   "scripts": {
-    "dev": "tsx watch --env-file=.env src/server.ts",
-    "build": "tsc -p tsconfig.build.json",
-    "start": "node dist/server.js",
-    "typecheck": "tsc --noEmit",
-    "test": "vitest run"
-  },
-  "dependencies": {
-    "@fastify/helmet": "^13.2.0",
-    "@fastify/rate-limit": "^11.2.2",
-    "@fastify/static": "^10.1.10",
-    "fastify": "^5.12.8",
-    "mssql": "^12.7.14",
-    "nodemailer": "^10.4.0",
-    "pdfkit": "^0.20.2",
-    "zod": "^4.6.7"
-  },
-  "devDependencies": {
-    "@types/mssql": "^9.1.7",
-    "@types/node": "^24.0.0",
-    "@types/nodemailer": "^8.0.2",
-    "@types/pdfkit": "^0.17.7",
-    "tsx": "^4.23.0",
-    "typescript": "~5.9.3",
-    "vitest": "^5.1.0"
+    "dev": "npm run dev:api --",
+    "dev:api": "npm run dev --workspace @facts-pay/api --",
+    "dev:mobile": "npm run start --workspace @facts-pay/mobile --",
+    "android": "npm run android --workspace @facts-pay/mobile --",
+    "ios": "npm run ios --workspace @facts-pay/mobile --",
+    "build": "npm run build --workspaces --if-present",
+    "build:api": "npm run build --workspace @facts-pay/api",
+    "build:mobile": "npm run build --workspace @facts-pay/mobile",
+    "start": "npm run start --workspace @facts-pay/api",
+    "typecheck": "npm run typecheck --workspaces",
+    "lint": "npm run lint --workspace @facts-pay/mobile",
+    "test": "npm run test --workspaces",
+    "test:integration": "npm run test:integration --workspace @facts-pay/api"
   }
 }

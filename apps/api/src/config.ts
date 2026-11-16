@@ -16,7 +16,7 @@ const envSchema = z.object({
 export const config = envSchema.parse(process.env);
 export type Config = z.infer<typeof envSchema>;
 
-// ---- files next to src/ (dev, tests) and dist/ (production): both sit one level below the project root ----
+// ---- files next to src/ (dev, tests) and dist/ (production), under the API workspace root ----
 const root = new URL('../', import.meta.url);
 /** The hosted pay page + per-school branding (public/schools/<slug>/logo.png). */
 export const publicDir = fileURLToPath(new URL('public/', root));

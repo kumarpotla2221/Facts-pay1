@@ -8,3 +8,10 @@ database_backup
 research_notes
 reports
 docs
+
+.tools/
+
+.DS_Store
+coverage/
+*.tsbuildinfo
+npm-debug.log*

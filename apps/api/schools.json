@@ -9,10 +9,10 @@
     "email": "metasschoolranchi@gmail.com",
     "minPayPercent": 50,
     "db": {
-      "host": "eu-az-sql-serv1.database.windows.net",
+      "host": "127.0.0.1",
       "port": 1433,
-      "name": "d9ykaxajbim4dd3",
-      "user": "um7giegaz1yv77d"
+      "name": "MetasSchoolRanchi.",
+      "user": "facts_pay"
     }
   }
 ]

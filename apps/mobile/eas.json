@@ -1,0 +1,21 @@
+{
+  "cli": {
+    "version": ">= 16.0.0",
+    "appVersionSource": "local"
+  },
+  "build": {
+    "demo": {
+      "distribution": "internal",
+      "environment": "preview",
+      "android": {
+        "buildType": "apk"
+      },
+      "env": {
+        "EXPO_PUBLIC_API_URL": "http://127.0.0.1:4000",
+        "EXPO_PUBLIC_SCHOOL_SLUG": "ranchi",
+        "EXPO_PUBLIC_DEMO_CHECKOUT": "1",
+        "ALLOW_LOCAL_DEMO_HTTP": "1"
+      }
+    }
+  }
+}
