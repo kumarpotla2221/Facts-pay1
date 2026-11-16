@@ -6,6 +6,7 @@ import { z } from 'zod';
 const envSchema = z.object({
   PORT: z.coerce.number().default(4000),
   MOCK_GATEWAY: z.enum(['0', '1']).default('0'),
+  DEMO_ADMISSION: z.string().regex(/^[A-Za-z0-9/_-]{1,20}$/).optional(),
   TRUST_PROXY: z.enum(['0', '1']).default('0'),   // 1 when behind nginx/ALB so rate limiting sees the real client IP
   DB_TRUST_CERT: z.enum(['0', '1']).default('0'), // 1 = accept the SQL Server's self-signed certificate (dev)
   LOG_LEVEL: z.string().default('info'),

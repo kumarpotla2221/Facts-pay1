@@ -22,7 +22,7 @@ const settleB = z.object({ outcome: z.enum(['success', 'fail']), mode: z.string(
 export function payRoutes(app: FastifyInstance, deps: { payments: Payments; schools: Schools; config: Config }) {
   const { payments, schools, config } = deps;
   const checkout = config.MOCK_GATEWAY === '1'
-    ? { mode: 'demo', message: 'Demo checkout only. No money will be charged.' }
+    ? { mode: 'demo', message: 'Demo checkout only. No money will be charged.', demoAdmission: config.DEMO_ADMISSION }
     : { mode: 'unavailable', message: 'Online payments are currently unavailable. Please pay at the school fee counter.' };
 
   /** What the pay page needs to brand itself. */

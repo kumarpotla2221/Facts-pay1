@@ -52,6 +52,10 @@ asset($('hero'), 'hero.jpg');
 api('info').then(i => {
   school = i;
   $('checkoutNotice').textContent = i.checkout?.message || 'Online payments are currently unavailable. Please pay at the school fee counter.';
+  if (i.checkout?.mode === 'demo' && i.checkout.demoAdmission) {
+    $('checkoutNotice').textContent += ' Try admission number ' + i.checkout.demoAdmission + '.';
+    if (!$('adm').value) $('adm').value = i.checkout.demoAdmission;
+  }
   refreshTotal();
   $('school').textContent = i.name; $('addr').textContent = i.address || '';
   document.title = i.name + ' - Fee Payment';
@@ -156,6 +160,7 @@ $('ok').onclick = finish('success');
 $('fail').onclick = finish('fail');
 
 function showReceipt(r, paid, email, mode) {
+  $('rDemo').hidden = school.checkout?.mode !== 'demo';
   $('rSchool').textContent = school.name || ''; $('rAddr').textContent = school.address || '';
   $('rNo').textContent = r.receiptNo; $('rDate').textContent = new Date().toLocaleString('en-IN');
   $('rAdm').textContent = adm; $('rName').textContent = student.name; $('rCls').textContent = classOf(student);
