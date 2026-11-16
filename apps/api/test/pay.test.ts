@@ -5,7 +5,7 @@ import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import type { SendMailOptions } from 'nodemailer';
 import sql from 'mssql';
-import { buildApp } from '../src/app.js';
+import { buildApp } from '../src/create-app.js';
 import { config, schools } from '../src/config.js';
 import { getDues, type Entry } from '../src/school-db.js';
 import type { Payable as Due } from '../src/payments.js';

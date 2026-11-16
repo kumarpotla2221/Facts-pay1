@@ -1,0 +1,11 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "fastify",
+  "installCommand": "cd ../.. && npm ci --workspace=@facts-pay/api --include-workspace-root=false",
+  "buildCommand": "npm run build",
+  "functions": {
+    "src/server.ts": {
+      "includeFiles": "{schools.json,schools-sql/**/*.sql,public/**,demo-site/**}"
+    }
+  }
+}

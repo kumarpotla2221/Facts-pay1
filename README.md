@@ -87,6 +87,8 @@ Each app owns its dependencies. Add or update backend dependencies with `npm ins
 
 ## Deployment
 
+For Vercel, import `kumarpotla2221/Facts-pay1` and set the project Root Directory to **`apps/api`**, framework to **Fastify**, and Node.js version to **24.x**. The workspace's `vercel.json` configures installation, API compilation, and runtime assets. See the [Vercel deployment guide](apps/api/VERCEL.md) for environment settings and first-deployment checks. Deploying the page and health endpoint can be done before the database migration; lookup and payment features need the database connection.
+
 Build the API container from the repository root with `docker build -t facts-pay .`. The Dockerfile installs only API dependencies and preserves the API's runtime assets and school queries. Supply backend secrets through the deployment environment.
 
 Run EAS commands from `apps/mobile/`; its `eas.json` remains alongside the app. The root `.easignore` excludes local secrets, generated outputs, tools, and the separate nested checkout. An APK still needs a reachable API and database; it does not host them.

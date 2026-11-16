@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
-import { buildApp } from '../src/app.js';
+import { buildApp } from '../src/create-app.js';
 import { schools } from '../src/config.js';
 
 describe('API workspace resources (no database)', () => {
@@ -8,6 +8,12 @@ describe('API workspace resources (no database)', () => {
 
   beforeAll(async () => { app = await buildApp({ logger: false }); });
   afterAll(async () => { await app?.close(); });
+
+  it('opens the first configured school from the deployment URL', async () => {
+    const response = await app.inject({ method: 'GET', url: '/' });
+    expect(response.statusCode).toBe(302);
+    expect(response.headers.location).toBe(`/pay/${schools[0]!.slug}`);
+  });
 
   it('serves health and bundled payment assets', async () => {
     const health = await app.inject({ method: 'GET', url: '/health' });

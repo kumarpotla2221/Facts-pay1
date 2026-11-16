@@ -1,6 +1,8 @@
 # Facts Pay
 
 This is the `@facts-pay/api` workspace. Install dependencies from the repository root with `npm install`. Paths and commands below are relative to `apps/api/` unless stated otherwise; root commands are listed in the [monorepo README](../../README.md).
+
+For the new Vercel deployment, follow [VERCEL.md](VERCEL.md). Set the Vercel project Root Directory to `apps/api`; the Expo app is a separate native build.
 Online school fee + transport fee payments for many schools, each with its own (customised) SQL Server database.
 A school's website embeds one hosted pay page. This service reads the dues from that school's database, takes the payment,
 records it in its own `pay_order` table inside that database (never in the school's own records) and emails the parent a PDF
@@ -25,7 +27,7 @@ the dues query lives here, in this repository. The API keeps no state, so you ca
 ## Project map
     src/                 the API (Fastify + TypeScript), read in this order:
       server.ts            starts it
-      app.ts               wiring: security headers, rate limit, pay page, error handler
+      create-app.ts        wiring: security headers, rate limit, pay page, error handler
       routes.ts            HTTP: validates input, calls payments
       payments.ts          the flow: lookup -> createOrder -> settle
       school-db.ts         the only code that talks to a school database: the dues query and the pay_order statements

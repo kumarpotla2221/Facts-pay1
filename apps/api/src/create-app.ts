@@ -38,6 +38,12 @@ export async function buildApp(opts: { logger?: boolean; mailTransport?: Pick<Tr
 
   app.get('/health', async () => ({ ok: true }));
 
+  app.get('/', async (_req, reply) => {
+    const school = schoolList[0];
+    if (!school) throw new HttpError(503, 'School payments are temporarily unavailable.');
+    return reply.redirect(`/pay/${school.slug}`);
+  });
+
   // Hosted pay page. Only the school's own website(s) may iframe it (and the demo site below, which is this origin).
   app.get('/pay/:slug', async (req, reply) => {
     const school = schools.get((req.params as { slug: string }).slug);
