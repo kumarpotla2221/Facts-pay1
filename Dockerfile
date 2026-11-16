@@ -21,6 +21,7 @@ COPY --from=build /app/apps/api/node_modules ./apps/api/node_modules
 COPY --from=build /app/apps/api/dist ./apps/api/dist
 COPY --from=build /app/apps/api/public ./apps/api/public
 COPY --from=build /app/apps/api/schools-sql ./apps/api/schools-sql
+COPY --from=build /app/apps/api/certs ./apps/api/certs
 COPY --from=build /app/apps/api/demo-site ./apps/api/demo-site
 WORKDIR /app/apps/api
 USER node
