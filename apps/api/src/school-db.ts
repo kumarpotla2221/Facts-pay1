@@ -1,4 +1,5 @@
 import sql from 'mssql';
+import { PostgresDb } from './postgres-db.js';
 import { HttpError } from './errors.js';
 
 /**
@@ -7,7 +8,7 @@ import { HttpError } from './errors.js';
  * login can write nothing but pay_order: nothing is ever written into the school's own records. Values are always
  * bound as typed parameters.
  */
-export type Db = sql.ConnectionPool;
+export type Db = sql.ConnectionPool | PostgresDb;
 
 export interface Student { name: string; cls: string; section: string }
 /** One thing to pay, as the school's records have it. Integer paise, never floats. `lines` = display-only breakdown, sums to `paise`. */
@@ -26,6 +27,7 @@ export const ID_RE = /^[A-Za-z0-9_-]{1,20}$/;
  * admission number. `duesSql` is the school's query, sent as is with @adm_no bound (contract: schools-sql/README.md).
  */
 export async function getDues(db: Db, duesSql: string, adm: string): Promise<Dues | null> {
+  if (db instanceof PostgresDb) return db.getDues(adm);
   const r = await db.request().input('adm_no', sql.VarChar(20), adm).query(duesSql);
   const [students, dues, lines, entries] = r.recordsets as unknown as [
     Student[],
@@ -50,6 +52,7 @@ export async function getDues(db: Db, duesSql: string, adm: string): Promise<Due
 /** An online payment the school has not approved yet, so its own records still count the amount as owed. */
 export interface Unapproved { receiptNo: string; paidAt: Date; mode: string; paise: number; pays: { id: string; paise: number }[] }
 export async function getUnapproved(db: Db, adm: string): Promise<Unapproved[]> {
+  if (db instanceof PostgresDb) return db.getUnapproved(adm);
   const r = await db.request().input('adm_no', sql.VarChar(20), adm)
     .query<{ receipt_no: string; paid_at: Date; payment_mode: string; due_ids: string; amount_paise: number }>(
       `SELECT receipt_no, paid_at, payment_mode, due_ids, amount_paise FROM pay_order
@@ -60,11 +63,13 @@ export async function getUnapproved(db: Db, adm: string): Promise<Unapproved[]> 
   }));
 }
 
-export async function createOrder(db: Db, o: {
+export interface NewOrder {
   orderId: string; adm: string; student: Student; pays: { id: string; paise: number }[]; paise: number; email?: string; phone?: string;
   snapshot: Snapshot;    // printed on the receipt later
   ttlMinutes: number;
-}): Promise<void> {
+}
+export async function createOrder(db: Db, o: NewOrder): Promise<void> {
+  if (db instanceof PostgresDb) return db.createOrder(o);
   await db.request()
     .input('order_id', sql.VarChar(36), o.orderId)
     .input('adm_no', sql.VarChar(20), o.adm)
@@ -89,6 +94,7 @@ export interface PaidOrder { receiptNo: string; admNo: string; paise: number; pa
  * so only one caller can ever win: a double click, a replay, an expired or a failed order matches no row and is refused.
  */
 export async function settleOrder(db: Db, orderId: string, gatewayRef: string, mode: string): Promise<PaidOrder> {
+  if (db instanceof PostgresDb) return db.settleOrder(orderId, gatewayRef, mode);
   const r = await db.request()
     .input('order_id', sql.VarChar(36), orderId)
     .input('gateway_ref', sql.VarChar(64), gatewayRef)
@@ -110,6 +116,7 @@ export async function settleOrder(db: Db, orderId: string, gatewayRef: string, m
 
 /** The payment failed or was cancelled at the gateway. A CREATED order becomes FAILED. Refused (409) if it is already PAID. */
 export async function failOrder(db: Db, orderId: string): Promise<void> {
+  if (db instanceof PostgresDb) return db.failOrder(orderId);
   const r = await db.request().input('order_id', sql.VarChar(36), orderId).query<{ status: string }>(`
     UPDATE pay_order SET status = 'FAILED' WHERE order_id = @order_id AND status = 'CREATED';
     SELECT status FROM pay_order WHERE order_id = @order_id`);

@@ -1,12 +1,14 @@
 import sql from 'mssql';
 import type { School } from './config.js';
 import { HttpError } from './errors.js';
+import { PostgresDb } from './postgres-db.js';
+import type { Db } from './school-db.js';
 
 /** slug -> school (from schools.json) and a connection pool to THAT school's own database. */
 export class Schools {
   // ponytail: one small pool per school, opened on first use and kept open. With hundreds of schools,
   // close pools that have been idle for a while.
-  private pools = new Map<string, Promise<sql.ConnectionPool>>();
+  private pools = new Map<string, Promise<Db>>();
 
   constructor(private list: School[], private opts: { trustCert: boolean; onPoolError: (err: Error, slug: string) => void }) {}
 
@@ -16,9 +18,19 @@ export class Schools {
     return school;
   }
 
-  db(school: School): Promise<sql.ConnectionPool> {
+  db(school: School): Promise<Db> {
     let pool = this.pools.get(school.slug);
     if (!pool) {
+      const prefix = `PAY_${school.slug.toUpperCase().replace(/-/g, '_')}`;
+      const postgresUrl = process.env[`${prefix}_DATABASE_URL`];
+      if (postgresUrl) {
+        if (school.slug !== 'ranchi') throw new Error('PostgreSQL dues query is not configured for this school');
+        const pg = new PostgresDb(postgresUrl, process.env[`${prefix}_SCHEMA`] || `school_${school.slug}`,
+          err => this.opts.onPoolError(err, school.slug));
+        pool = Promise.resolve(pg);
+        this.pools.set(school.slug, pool);
+        return pool;
+      }
       const password = process.env[school.db.passwordEnv];
       if (!password) throw new Error(`Env var ${school.db.passwordEnv} (DB password of ${school.slug}) is not set`);
       const p = new sql.ConnectionPool({

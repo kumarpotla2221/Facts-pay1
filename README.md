@@ -1,6 +1,6 @@
 # Facts Pay
 
-School fee and transport payments, organized as an npm workspaces monorepo. The Fastify API serves the existing web payment page and connects to each school's SQL Server database. The Expo app uses the same API on Android and iOS.
+School fee and transport payments, organized as an npm workspaces monorepo. The Fastify API serves the web payment page and supports SQL Server or a Supabase PostgreSQL copy of the Ranchi database. The Expo app uses the same API on Android and iOS.
 
 ```text
 apps/
@@ -86,6 +86,9 @@ Integration tests and simulated successful checkouts write payment records. Use 
 Each app owns its dependencies. Add or update backend dependencies with `npm install <package> --workspace @facts-pay/api`. For Expo packages, run `npx expo install <package>` from `apps/mobile/` so Expo selects compatible versions. Commit the root lockfile; do not create app-specific lockfiles. npm's [workspace documentation](https://docs.npmjs.com/cli/v11/using-npm/workspaces/) covers running other app commands with `--workspace`.
 
 ## Deployment
+
+For Supabase migration and the private backend database connection, follow the [Supabase guide](apps/api/SUPABASE.md).
+It explains converting a restored SQL Server backup, validating the copied data, and configuring a limited application login.
 
 For Vercel, import `kumarpotla2221/Facts-pay1` and set the project Root Directory to **`apps/api`**, framework to **Fastify**, and Node.js version to **24.x**. The workspace's `vercel.json` configures installation and API compilation; Vercel traces the API's runtime assets. See the [Vercel deployment guide](apps/api/VERCEL.md) for environment settings and first-deployment checks. Deploying the page and health endpoint can be done before the database migration; lookup and payment features need the database connection.
 
