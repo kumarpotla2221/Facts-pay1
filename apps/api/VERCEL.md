@@ -21,6 +21,8 @@ Database credentials and SMTP credentials are not needed to render the page or p
 
 The API has one startup entrypoint, `src/server.ts`, which imports Fastify directly so Vercel can detect it. `src/create-app.ts` contains the app factory used by the server and tests. Use the native Fastify preset without a `functions` override: Vercel CLI 65.14 rejects these overrides with an `unused_function` error before building the app. Runtime files are included through Vercel's file tracing; `config.ts` exposes the public asset directory to that tracer. The root and API manifests pin Node.js 24.x so a broad version range cannot override the selected runtime.
 
+Keep the final `app.listen()` call asynchronous without awaiting it at module scope. Vercel intercepts that call while loading the module and binds the server afterward; awaiting the listening event prevents initialization from completing. The startup regression test exercises this host behavior in a separate process.
+
 Vercel supports [Fastify applications](https://vercel.com/docs/frameworks/backend/fastify) and [npm workspaces monorepos](https://vercel.com/docs/monorepos). The Dockerfile is for container hosts; Vercel uses this workspace's Fastify configuration.
 
 ## Check the first deployment
