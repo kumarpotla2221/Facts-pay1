@@ -1,4 +1,5 @@
 import { execFile } from 'node:child_process';
+import { readFileSync } from 'node:fs';
 import { promisify } from 'node:util';
 import { fileURLToPath } from 'node:url';
 import { expect, it } from 'vitest';
@@ -7,6 +8,7 @@ const execFileAsync = promisify(execFile);
 
 it('finishes startup when the deployment host defers binding the HTTP server', async () => {
   const serverUrl = new URL('../src/server.ts', import.meta.url).href;
+  const deployment = JSON.parse(readFileSync(new URL('../vercel.json', import.meta.url), 'utf8')) as { env?: Record<string, string> };
   const script = `
     import http from 'node:http';
     let onCapture;
@@ -29,7 +31,13 @@ it('finishes startup when the deployment host defers binding the HTTP server', a
   const { stdout } = await execFileAsync(process.execPath, ['--import', 'tsx', '--input-type=module', '--eval', script], {
     cwd: fileURLToPath(new URL('../', import.meta.url)),
     timeout: 12000,
-    env: { ...process.env, PORT: '0', LOG_LEVEL: 'silent', TRUST_PROXY: '1', MOCK_GATEWAY: '0', SMTP_URL: '', PAY_RANCHI_PASS: '' },
+    env: {
+      ...process.env,
+      ...deployment.env,
+      // Vercel disables require(ESM) by default, even on Node.js 24.
+      NODE_OPTIONS: deployment.env?.NODE_OPTIONS ?? '--no-experimental-require-module',
+      PORT: '0', LOG_LEVEL: 'silent', TRUST_PROXY: '1', MOCK_GATEWAY: '0', SMTP_URL: '', PAY_RANCHI_PASS: '',
+    },
   });
   expect(stdout).toContain('startup-ready');
 }, 20000);

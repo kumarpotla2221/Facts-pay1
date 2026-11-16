@@ -23,6 +23,8 @@ The API has one startup entrypoint, `src/server.ts`, which imports Fastify direc
 
 Keep the final `app.listen()` call asynchronous without awaiting it at module scope. Vercel intercepts that call while loading the module and binds the server afterward; awaiting the listening event prevents initialization from completing. The startup regression test exercises this host behavior in a separate process.
 
+The committed configuration also sets the nonsecret runtime option `NODE_OPTIONS=--experimental-require-module`. `@fastify/static` loads the ES module `content-disposition` through CommonJS, and Vercel disables Node.js's `require(ESM)` support by default. This opt-in is documented in [Vercel's Node.js configuration guide](https://vercel.com/docs/functions/runtimes/node-js/advanced-node-configuration). Keep database and SMTP secrets in Project Settings rather than the configuration file.
+
 Vercel supports [Fastify applications](https://vercel.com/docs/frameworks/backend/fastify) and [npm workspaces monorepos](https://vercel.com/docs/monorepos). The Dockerfile is for container hosts; Vercel uses this workspace's Fastify configuration.
 
 ## Check the first deployment
