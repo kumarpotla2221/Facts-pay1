@@ -1,4 +1,4 @@
-export interface School { name: string; color: string; address?: string; phone?: string; email?: string }
+export interface School { name: string; color: string; address?: string; phone?: string; email?: string; checkout?: { mode: 'demo' | 'unavailable'; message: string } }
 export interface Due { id: string; label: string; paise: number; minPaise: number; lines: { label: string; paise: number }[] }
 export interface Lookup { student: { name: string; cls: string; section: string }; items: Due[]; statement: { date: string; ref: string; label: string; chargedPaise: number; paidPaise: number }[] }
 export interface Order { orderId: string; paise: number }

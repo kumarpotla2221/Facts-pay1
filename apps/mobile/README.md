@@ -59,7 +59,32 @@ npm run dev:mobile -- --go --localhost --port 8081 --clear
 
 Set `EXPO_PUBLIC_API_URL=http://127.0.0.1:4000` in `apps/mobile/.env` for this USB setup. Scan the newly generated QR code in compatible Expo Go, and keep both servers running and USB connected. If you choose a different Metro port, reverse that port too. Repeat forwarding after reconnecting USB.
 
-## Build an Android demo APK
+## Build an APK using the hosted API
+
+The `preview` profile builds a standalone APK using `https://facts-pay1-fks1.vercel.app`.
+It includes the app's JavaScript and uses the hosted demo API, so Expo Go, Metro, USB forwarding,
+and a running laptop are not required after installation. The phone still needs internet access.
+Checkout is simulated and the app displays a demo label; no real money is collected.
+
+Review the local `eas.json` changes before starting a build. From `apps/mobile/`:
+
+```powershell
+npx --yes eas-cli@latest login
+npx --yes eas-cli@latest build --platform android --profile preview
+```
+
+The build command uploads the project to Expo's cloud build service. On the first build, follow the prompts to
+create/link an Expo project and generate an Android signing keystore. This can update the app's project configuration;
+review those changes and keep the signing credentials for future builds. These commands do not push to GitHub
+or deploy the Vercel backend.
+
+When the build finishes, open its Expo build page and download the `.apk` from the build artifact link.
+Open that link on the Android phone, allow installation from that browser if prompted, and install the APK.
+The `preview` profile's public API URL is embedded at build time; changing it requires another APK build.
+
+See Expo's [APK build instructions](https://docs.expo.dev/build-reference/apk/).
+
+## Build an Android APK for the local USB demo
 
 The `demo` profile in `eas.json` produces a standalone, internally distributed APK. It embeds the JavaScript and does not need Expo Go or Metro. It still needs the backend and database.
 

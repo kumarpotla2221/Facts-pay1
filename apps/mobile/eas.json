@@ -4,6 +4,19 @@
     "appVersionSource": "local"
   },
   "build": {
+    "preview": {
+      "distribution": "internal",
+      "environment": "preview",
+      "android": {
+        "buildType": "apk"
+      },
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://facts-pay1-fks1.vercel.app",
+        "EXPO_PUBLIC_SCHOOL_SLUG": "ranchi",
+        "EXPO_PUBLIC_DEMO_CHECKOUT": "1",
+        "ALLOW_LOCAL_DEMO_HTTP": "0"
+      }
+    },
     "demo": {
       "distribution": "internal",
       "environment": "preview",

@@ -26,6 +26,11 @@
       "expo-font",
       "expo-sharing",
       "expo-build-properties"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "48120cc6-2dd9-4d6c-a8ff-5c21ddc58d7f"
+      }
+    }
   }
 }
