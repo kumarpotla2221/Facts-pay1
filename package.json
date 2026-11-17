@@ -19,5 +19,8 @@
     "lint": "npm run lint --workspace @facts-pay/mobile",
     "test": "npm run test --workspaces",
     "test:integration": "npm run test:integration --workspace @facts-pay/api"
+  },
+  "devDependencies": {
+    "@types/react": "~19.3.0"
   }
 }
